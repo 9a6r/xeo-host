@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/server/header') %>
+
+<% if(isOwner || user.isAdmin) { %>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="glass p-6 rounded-2xl border border-white/5">
+        <h3 class="font-bold mb-4 text-white">General</h3>
+        <form action="/server/<%= s.id %>/settings/rename" method="POST">
+            <label class="text-xs text-gray-500 uppercase font-bold">Server Name</label>
+            <input name="newName" value="<%= s.name %>" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white mt-1 mb-4">
+            <button class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white w-full py-2 rounded-xl font-bold transition">Rename Server</button>
+        </form>
+    </div>
+    <div class="glass p-6 rounded-2xl border border-red-500/20 bg-red-500/5">
+        <h3 class="font-bold mb-4 text-red-400">Danger Zone</h3>
+        <div class="space-y-3">
+            <form action="/server/<%= s.id %>/settings/reinstall" method="POST" onsubmit="return confirm('This will delete all files. Continue?')"><button class="w-full bg-orange-600/20 text-orange-400 hover:bg-orange-600 hover:text-white py-2 rounded-xl font-bold transition">Reinstall Server</button></form>
+            <form action="/server/<%= s.id %>/settings/delete" method="POST" onsubmit="return confirm('DELETE SERVER PERMANENTLY?')"><button class="w-full bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white py-2 rounded-xl font-bold transition">Delete Server</button></form>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,287 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <h2 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            <i class="fa-solid fa-puzzle-piece mr-3"></i>Plugins & Themes
+        </h2>
+        <div class="flex gap-3 mt-4 md:mt-0">
+            <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
+                class="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">
+                <i class="fa-solid fa-upload"></i> Upload Plugin
+            </button>
+            <button onclick="reloadPlugins()" class="bg-white/10 px-4 py-3 rounded-xl hover:bg-white/20 transition">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-6">
+        <a href="?tab=plugins" class="px-6 py-3 rounded-xl font-bold transition <%= tab === 'plugins' ? 'bg-purple-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10' %>">
+            <i class="fa-solid fa-puzzle-piece mr-2"></i>Plugins (<%= plugins.length %>)
+        </a>
+        <a href="?tab=themes" class="px-6 py-3 rounded-xl font-bold transition <%= tab === 'themes' ? 'bg-pink-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10' %>">
+            <i class="fa-solid fa-palette mr-2"></i>Themes (<%= themes.length %>)
+        </a>
+    </div>
+
+    <% if (tab === 'plugins') { %>
+    <!-- Plugins Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (plugins.length === 0) { %>
+        <div class="col-span-full glass p-12 rounded-3xl text-center border border-white/5">
+            <i class="fa-solid fa-puzzle-piece text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">No Plugins Installed</h3>
+            <p class="text-gray-500 text-sm">Upload a plugin to get started</p>
+        </div>
+        <% } %>
+
+        <% plugins.forEach(plugin => { %>
+        <div class="glass p-6 rounded-3xl border border-white/5 hover:border-purple-500/30 transition group">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                        <i class="<%= plugin.icon || 'fa-solid fa-puzzle-piece' %> text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white"><%= plugin.name %></h3>
+                        <p class="text-xs text-gray-500">v<%= plugin.version || '1.0.0' %></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-1 rounded-lg text-xs font-bold <%= plugin.enabled ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400' %>">
+                        <%= plugin.enabled ? 'Active' : 'Inactive' %>
+                    </span>
+                </div>
+            </div>
+
+            <p class="text-gray-400 text-sm mb-4 line-clamp-2"><%= plugin.description || 'No description available' %></p>
+
+            <% if (plugin.author) { %>
+            <p class="text-xs text-gray-500 mb-4">
+                <i class="fa-solid fa-user mr-1"></i> <%= plugin.author %>
+            </p>
+            <% } %>
+
+            <div class="flex gap-2 pt-4 border-t border-white/5">
+                <form action="/admin/plugins/toggle/<%= plugin.id %>" method="POST" class="flex-1">
+                    <button type="submit" class="w-full py-2 rounded-xl font-bold text-sm transition <%= plugin.enabled ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white' : 'bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white' %>">
+                        <i class="fa-solid <%= plugin.enabled ? 'fa-pause' : 'fa-play' %> mr-1"></i>
+                        <%= plugin.enabled ? 'Disable' : 'Enable' %>
+                    </button>
+                </form>
+                <% if (plugin.configurable) { %>
+                <a href="/admin/plugins/settings/<%= plugin.id %>" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
+                <% } %>
+                <form action="/admin/plugins/delete/<%= plugin.id %>" method="POST" onsubmit="return confirm('Delete this plugin?')">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+    <% } else { %>
+    <!-- Themes Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (themes.length === 0) { %>
+        <div class="col-span-full glass p-12 rounded-3xl text-center border border-white/5">
+            <i class="fa-solid fa-palette text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">No Themes Installed</h3>
+            <p class="text-gray-500 text-sm">Upload a theme to customize your panel</p>
+        </div>
+        <% } %>
+
+        <!-- Default Theme -->
+        <div class="glass p-6 rounded-3xl border <%= !activeTheme ? 'border-pink-500 ring-2 ring-pink-500/20' : 'border-white/5' %> hover:border-pink-500/30 transition">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center">
+                        <i class="fa-solid fa-moon text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white">Default Theme</h3>
+                        <p class="text-xs text-gray-500">Built-in</p>
+                    </div>
+                </div>
+                <% if (!activeTheme) { %>
+                <span class="px-2 py-1 rounded-lg text-xs font-bold bg-pink-500/20 text-pink-400">Active</span>
+                <% } %>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">The default dark theme for XeoStudio panel</p>
+            <% if (activeTheme) { %>
+            <form action="/admin/plugins/theme/set" method="POST">
+                <input type="hidden" name="themeId" value="">
+                <button type="submit" class="w-full py-2 rounded-xl font-bold text-sm bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white transition">
+                    <i class="fa-solid fa-check mr-1"></i> Activate
+                </button>
+            </form>
+            <% } %>
+        </div>
+
+        <% themes.forEach(theme => { %>
+        <div class="glass p-6 rounded-3xl border <%= activeTheme && activeTheme.id === theme.id ? 'border-pink-500 ring-2 ring-pink-500/20' : 'border-white/5' %> hover:border-pink-500/30 transition">
+            <% if (theme.preview) { %>
+            <div class="mb-4 rounded-xl overflow-hidden">
+                <img src="/plugins/<%= theme.id %>/<%= theme.preview %>" alt="Theme Preview" class="w-full h-32 object-cover">
+            </div>
+            <% } %>
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: <%= theme.primaryColor || 'linear-gradient(135deg, #ec4899, #8b5cf6)' %>">
+                        <i class="<%= theme.icon || 'fa-solid fa-palette' %> text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white"><%= theme.name %></h3>
+                        <p class="text-xs text-gray-500">v<%= theme.version || '1.0.0' %></p>
+                    </div>
+                </div>
+                <% if (activeTheme && activeTheme.id === theme.id) { %>
+                <span class="px-2 py-1 rounded-lg text-xs font-bold bg-pink-500/20 text-pink-400">Active</span>
+                <% } %>
+            </div>
+
+            <p class="text-gray-400 text-sm mb-4 line-clamp-2"><%= theme.description || 'No description available' %></p>
+
+            <% if (theme.author) { %>
+            <p class="text-xs text-gray-500 mb-4">
+                <i class="fa-solid fa-user mr-1"></i> <%= theme.author %>
+            </p>
+            <% } %>
+
+            <div class="flex gap-2 pt-4 border-t border-white/5">
+                <% if (!activeTheme || activeTheme.id !== theme.id) { %>
+                <form action="/admin/plugins/theme/set" method="POST" class="flex-1">
+                    <input type="hidden" name="themeId" value="<%= theme.id %>">
+                    <button type="submit" class="w-full py-2 rounded-xl font-bold text-sm bg-pink-500/20 text-pink-400 hover:bg-pink-500 hover:text-white transition">
+                        <i class="fa-solid fa-check mr-1"></i> Activate
+                    </button>
+                </form>
+                <% } %>
+                <form action="/admin/plugins/delete/<%= theme.id %>" method="POST" onsubmit="return confirm('Delete this theme?')">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+    <% } %>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="glass bg-[#151515] p-8 rounded-3xl w-full max-w-lg border border-white/10 shadow-2xl relative">
+        <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+            <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+        
+        <h3 class="text-2xl font-bold mb-2">Upload Plugin/Theme</h3>
+        <p class="text-gray-400 text-sm mb-6">Upload a .zip file containing the plugin or theme</p>
+
+        <form id="uploadForm" enctype="multipart/form-data" class="space-y-4">
+            <div id="dropZone" class="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-purple-500/50 transition cursor-pointer">
+                <input type="file" name="plugin" id="pluginFile" accept=".zip" class="hidden" onchange="handleFileSelect(this)">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-500 mb-3"></i>
+                <p class="text-gray-400 mb-2">Drag & drop your plugin here</p>
+                <p class="text-gray-500 text-sm">or click to browse</p>
+                <p id="selectedFile" class="text-purple-400 mt-3 hidden"></p>
+            </div>
+
+            <div id="uploadProgress" class="hidden">
+                <div class="bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-pink-600 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="uploadStatus" class="text-center text-sm text-gray-400 mt-2">Uploading...</p>
+            </div>
+
+            <button type="submit" id="uploadBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-xl font-bold hover:opacity-90 transition disabled:opacity-50" disabled>
+                <i class="fa-solid fa-upload mr-2"></i> Upload Plugin
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('pluginFile');
+const uploadForm = document.getElementById('uploadForm');
+const uploadBtn = document.getElementById('uploadBtn');
+
+dropZone.onclick = () => fileInput.click();
+
+dropZone.ondragover = (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-purple-500');
+};
+
+dropZone.ondragleave = () => {
+    dropZone.classList.remove('border-purple-500');
+};
+
+dropZone.ondrop = (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-purple-500');
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect(fileInput);
+    }
+};
+
+function handleFileSelect(input) {
+    if (input.files.length) {
+        const file = input.files[0];
+        document.getElementById('selectedFile').textContent = file.name;
+        document.getElementById('selectedFile').classList.remove('hidden');
+        uploadBtn.disabled = false;
+    }
+}
+
+uploadForm.onsubmit = async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('plugin', fileInput.files[0]);
+
+    document.getElementById('uploadProgress').classList.remove('hidden');
+    uploadBtn.disabled = true;
+
+    try {
+        const response = await fetch('/admin/plugins/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            document.getElementById('uploadStatus').textContent = 'Upload successful!';
+            document.getElementById('progressBar').style.width = '100%';
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            document.getElementById('uploadStatus').textContent = 'Error: ' + result.error;
+            document.getElementById('uploadStatus').classList.add('text-red-400');
+            uploadBtn.disabled = false;
+        }
+    } catch (err) {
+        document.getElementById('uploadStatus').textContent = 'Upload failed: ' + err.message;
+        document.getElementById('uploadStatus').classList.add('text-red-400');
+        uploadBtn.disabled = false;
+    }
+};
+
+function reloadPlugins() {
+    fetch('/admin/plugins/reload', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) location.reload();
+        });
+}
+</script>
+
+<%- include('../partials/footer') %>

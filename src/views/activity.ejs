@@ -1,0 +1,218 @@
+<%- include('partials/header') %>
+
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div class="text-center md:text-left">
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+                <i class="fa-solid fa-clock-rotate-left mr-3"></i>Activity Log
+            </h2>
+            <p class="text-gray-400 text-sm mt-1">Track all your actions and server events</p>
+        </div>
+        <button onclick="refreshLogs()" class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded-xl font-bold transition text-sm">
+            <i class="fa-solid fa-refresh mr-2"></i>Refresh
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="glass p-5 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-day text-green-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-white" id="statToday"><%= stats.today %></div>
+                    <div class="text-xs text-gray-500 uppercase font-bold">Today</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-week text-blue-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-white" id="statWeek"><%= stats.week %></div>
+                    <div class="text-xs text-gray-500 uppercase font-bold">This Week</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <i class="fa-solid fa-infinity text-purple-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-white" id="statTotal"><%= stats.total %></div>
+                    <div class="text-xs text-gray-500 uppercase font-bold">Total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="glass p-4 rounded-2xl mb-6 flex flex-wrap gap-3 items-center">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-filter text-gray-500"></i>
+            <span class="text-gray-400 text-sm font-bold">Filter:</span>
+        </div>
+        <button onclick="filterLogs('all')" class="filter-btn active bg-white/10 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" data-filter="all">All</button>
+        <button onclick="filterLogs('server')" class="filter-btn bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" data-filter="server">Server</button>
+        <button onclick="filterLogs('file')" class="filter-btn bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" data-filter="file">Files</button>
+        <button onclick="filterLogs('auth')" class="filter-btn bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" data-filter="auth">Auth</button>
+    </div>
+
+    <!-- Activity List -->
+    <div class="glass rounded-2xl overflow-hidden">
+        <div class="p-4 border-b border-white/5 flex justify-between items-center">
+            <h3 class="font-bold text-gray-400 uppercase text-xs">Recent Activity</h3>
+            <span class="text-gray-500 text-xs" id="logCount"><%= logs.length %> events</span>
+        </div>
+        
+        <div class="divide-y divide-white/5 max-h-[600px] overflow-y-auto custom-scroll" id="activityList">
+            <% if(logs.length === 0) { %>
+                <div class="p-8 text-center">
+                    <i class="fa-solid fa-inbox text-4xl text-gray-700 mb-3"></i>
+                    <p class="text-gray-500">No activity yet</p>
+                </div>
+            <% } else { %>
+                <% logs.forEach(log => { %>
+                <div class="activity-item p-4 hover:bg-white/5 transition" data-action="<%= log.action %>">
+                    <div class="flex items-start gap-4">
+                        <!-- Icon -->
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                            <% if(log.action.includes('start')) { %>
+                                bg-green-500/20 text-green-400
+                            <% } else if(log.action.includes('stop')) { %>
+                                bg-red-500/20 text-red-400
+                            <% } else if(log.action.includes('restart')) { %>
+                                bg-yellow-500/20 text-yellow-400
+                            <% } else if(log.action.includes('file') || log.action.includes('upload') || log.action.includes('delete')) { %>
+                                bg-blue-500/20 text-blue-400
+                            <% } else if(log.action.includes('login') || log.action.includes('logout')) { %>
+                                bg-purple-500/20 text-purple-400
+                            <% } else if(log.action.includes('create')) { %>
+                                bg-cyan-500/20 text-cyan-400
+                            <% } else { %>
+                                bg-gray-500/20 text-gray-400
+                            <% } %>
+                        ">
+                            <i class="fa-solid 
+                                <% if(log.action.includes('start')) { %>fa-play
+                                <% } else if(log.action.includes('stop')) { %>fa-stop
+                                <% } else if(log.action.includes('restart')) { %>fa-rotate
+                                <% } else if(log.action.includes('upload')) { %>fa-upload
+                                <% } else if(log.action.includes('delete')) { %>fa-trash
+                                <% } else if(log.action.includes('file') || log.action.includes('edit')) { %>fa-file-pen
+                                <% } else if(log.action.includes('login')) { %>fa-right-to-bracket
+                                <% } else if(log.action.includes('logout')) { %>fa-right-from-bracket
+                                <% } else if(log.action.includes('create')) { %>fa-plus
+                                <% } else { %>fa-circle-info
+                                <% } %>
+                            "></i>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-bold text-white text-sm"><%= log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %></span>
+                                <% if(log.server_name) { %>
+                                    <span class="bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">
+                                        <i class="fa-solid fa-server mr-1"></i><%= log.server_name %>
+                                    </span>
+                                <% } %>
+                            </div>
+                            <% if(log.details) { %>
+                                <p class="text-gray-500 text-xs mt-1 truncate"><%= log.details %></p>
+                            <% } %>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] text-gray-600">
+                                <span><i class="fa-regular fa-clock mr-1"></i><%= new Date(log.created_at).toLocaleString() %></span>
+                                <% if(log.ip_address) { %>
+                                    <span><i class="fa-solid fa-globe mr-1"></i><%= log.ip_address %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFilter = 'all';
+
+function filterLogs(filter) {
+    currentFilter = filter;
+    
+    // Update button styles
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if(btn.dataset.filter === filter) {
+            btn.classList.remove('bg-white/5', 'text-gray-400');
+            btn.classList.add('bg-white/10', 'text-white', 'active');
+        } else {
+            btn.classList.remove('bg-white/10', 'text-white', 'active');
+            btn.classList.add('bg-white/5', 'text-gray-400');
+        }
+    });
+    
+    // Filter items
+    const items = document.querySelectorAll('.activity-item');
+    let visibleCount = 0;
+    
+    items.forEach(item => {
+        const action = item.dataset.action.toLowerCase();
+        let show = false;
+        
+        if(filter === 'all') show = true;
+        else if(filter === 'server' && (action.includes('start') || action.includes('stop') || action.includes('restart') || action.includes('create'))) show = true;
+        else if(filter === 'file' && (action.includes('file') || action.includes('upload') || action.includes('delete') || action.includes('edit'))) show = true;
+        else if(filter === 'auth' && (action.includes('login') || action.includes('logout'))) show = true;
+        
+        item.style.display = show ? 'block' : 'none';
+        if(show) visibleCount++;
+    });
+    
+    document.getElementById('logCount').textContent = visibleCount + ' events';
+}
+
+function refreshLogs() {
+    fetch('/activity/api/logs?limit=100')
+        .then(res => res.json())
+        .then(logs => {
+            // Refresh stats too
+            fetch('/activity/api/stats')
+                .then(res => res.json())
+                .then(stats => {
+                    document.getElementById('statToday').textContent = stats.today;
+                    document.getElementById('statWeek').textContent = stats.week;
+                    document.getElementById('statTotal').textContent = stats.total;
+                });
+            
+            // Show toast
+            showToast('Activity refreshed!');
+        })
+        .catch(err => {
+            showToast('Failed to refresh', 'error');
+        });
+}
+
+function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg text-sm font-bold z-50 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script>
+
+<style>
+.custom-scroll::-webkit-scrollbar { width: 6px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
+
+<%- include('partials/footer') %>

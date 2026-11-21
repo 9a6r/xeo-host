@@ -1,0 +1,57 @@
+{
+    "id": "snow-effect",
+    "name": "Snow Effect ❄️",
+    "version": "1.0.0",
+    "description": "تأثير تساقط الثلج الجميل على الصفحة - Beautiful falling snow effect",
+    "author": "XeoStudio",
+    "type": "plugin",
+    "main": "index.js",
+    "icon": "fa-solid fa-snowflake",
+    "configurable": true,
+    "config": [
+        {
+            "name": "snowflakeCount",
+            "label": "عدد رقاقات الثلج / Snowflake Count",
+            "type": "number",
+            "default": 100,
+            "min": 10,
+            "max": 500,
+            "description": "عدد رقاقات الثلج المتساقطة"
+        },
+        {
+            "name": "snowflakeSize",
+            "label": "حجم الثلج / Snowflake Size",
+            "type": "select",
+            "default": "medium",
+            "options": [
+                {"value": "small", "label": "صغير / Small"},
+                {"value": "medium", "label": "متوسط / Medium"},
+                {"value": "large", "label": "كبير / Large"}
+            ]
+        },
+        {
+            "name": "fallSpeed",
+            "label": "سرعة السقوط / Fall Speed",
+            "type": "select",
+            "default": "normal",
+            "options": [
+                {"value": "slow", "label": "بطيء / Slow"},
+                {"value": "normal", "label": "عادي / Normal"},
+                {"value": "fast", "label": "سريع / Fast"}
+            ]
+        },
+        {
+            "name": "snowColor",
+            "label": "لون الثلج / Snow Color",
+            "type": "color",
+            "default": "#ffffff"
+        },
+        {
+            "name": "enableWind",
+            "label": "تفعيل الرياح / Enable Wind",
+            "type": "boolean",
+            "default": true,
+            "checkboxLabel": "تفعيل تأثير الرياح"
+        }
+    ]
+}

@@ -1,0 +1,37 @@
+{
+    "id": "neon-theme",
+    "name": "Neon Cyberpunk Theme",
+    "version": "1.0.0",
+    "description": "A vibrant neon cyberpunk theme with glowing effects",
+    "author": "XeoStudio",
+    "type": "theme",
+    "icon": "fa-solid fa-bolt",
+    "css": "theme.css",
+    "primaryColor": "linear-gradient(135deg, #00f5ff, #ff00ff)",
+    "configurable": true,
+    "config": [
+        {
+            "name": "neonColor",
+            "label": "Neon Color",
+            "type": "select",
+            "default": "cyan",
+            "options": [
+                {"value": "cyan", "label": "Cyan"},
+                {"value": "pink", "label": "Pink"},
+                {"value": "green", "label": "Green"},
+                {"value": "orange", "label": "Orange"}
+            ]
+        },
+        {
+            "name": "glowIntensity",
+            "label": "Glow Intensity",
+            "type": "select",
+            "default": "medium",
+            "options": [
+                {"value": "low", "label": "Low"},
+                {"value": "medium", "label": "Medium"},
+                {"value": "high", "label": "High"}
+            ]
+        }
+    ]
+}

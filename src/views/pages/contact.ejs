@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth">
+<head>
+    <title>Contact Us | <%= sitename %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+    <link rel="icon" type="image/png" href="<%= siteLogo %>">
+    <link rel="apple-touch-icon" href="<%= siteLogo %>">
+    <% } %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #020617; color: white; font-family: 'Segoe UI', sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    </style>
+    <%# Theme CSS %>
+    <% if (typeof themeCSS !== 'undefined' && themeCSS) { %>
+    <style id="theme-css"><%- themeCSS %></style>
+    <% } %>
+</head>
+<body class="bg-black min-h-screen">
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 p-6 backdrop-blur-md border-b border-white/5 bg-black/50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3">
+                <i class="fa-solid fa-layer-group text-2xl text-indigo-500"></i>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"><%= sitename %></h1>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="/" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Back
+                </a>
+                <% if(user) { %>
+                    <a href="/dashboard" class="bg-white/10 hover:bg-white/20 border border-white/10 px-6 py-2 rounded-full font-bold transition">Dashboard</a>
+                <% } else { %>
+                    <a href="/auth/discord" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-full font-bold transition">Login</a>
+                <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="pt-32 pb-20 px-4">
+        <div class="container mx-auto max-w-4xl">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Get in Touch</h1>
+                <p class="text-gray-400 text-lg">We're here to help! Choose the best way to reach us.</p>
+            </div>
+
+            <!-- Contact Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <!-- Discord -->
+                <a href="https://discord.gg/bV86tv4PPA" target="_blank" class="glass-card rounded-3xl p-8 hover:border-indigo-500/50 transition group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fa-brands fa-discord text-2xl text-indigo-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Discord Server</h3>
+                            <p class="text-gray-400 text-sm">Fastest response time</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">Join our Discord community for instant support, announcements, and to connect with other users.</p>
+                    <div class="mt-4 text-indigo-400 font-semibold flex items-center gap-2">
+                        Join Server <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <!-- Email -->
+                <div class="glass-card rounded-3xl p-8 hover:border-purple-500/50 transition group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fa-solid fa-envelope text-2xl text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Email Support</h3>
+                            <p class="text-gray-400 text-sm">For formal inquiries</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">For business inquiries, partnerships, or formal support requests.</p>
+                    <div class="mt-4 text-purple-400 font-semibold">
+                        soon
+                    </div>
+                </div>
+
+                <!-- Twitter/X -->
+                <a href="https://x.com/4z567" target="_blank" class="glass-card rounded-3xl p-8 hover:border-cyan-500/50 transition group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fa-brands fa-x-twitter text-2xl text-cyan-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Twitter / X</h3>
+                            <p class="text-gray-400 text-sm">Updates & news</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">Follow us for the latest updates, announcements, and tips.</p>
+                    <div class="mt-4 text-cyan-400 font-semibold flex items-center gap-2">
+                        Follow Us <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <!-- GitHub -->
+                <a href="https://github.com/9a6r" target="_blank" class="glass-card rounded-3xl p-8 hover:border-gray-500/50 transition group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gray-500/20 flex items-center justify-center group-hover:scale-110 transition">
+                            <i class="fa-brands fa-github text-2xl text-gray-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">GitHub</h3>
+                            <p class="text-gray-400 text-sm">Open source projects</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">Check out our open source projects and contribute to the community.</p>
+                    <div class="mt-4 text-gray-400 font-semibold flex items-center gap-2">
+                        View Projects <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="glass-card rounded-3xl p-8 md:p-12">
+                <h2 class="text-2xl font-bold mb-8 flex items-center gap-3">
+                    <i class="fa-solid fa-circle-question text-indigo-400"></i>
+                    Frequently Asked Questions
+                </h2>
+
+                <div class="space-y-6">
+                    <div class="border-b border-white/10 pb-6">
+                        <h3 class="text-lg font-bold text-white mb-2">How do I create a server?</h3>
+                        <p class="text-gray-400">After logging in, go to your Dashboard and click "Create Server". Choose your server type and configuration, then click create.</p>
+                    </div>
+
+                    <div class="border-b border-white/10 pb-6">
+                        <h3 class="text-lg font-bold text-white mb-2">How do I get more coins?</h3>
+                        <p class="text-gray-400">You can earn coins through daily rewards, referrals, or purchase them directly from the Wallet page.</p>
+                    </div>
+
+                    <div class="border-b border-white/10 pb-6">
+                        <h3 class="text-lg font-bold text-white mb-2">My server won't start. What should I do?</h3>
+                        <p class="text-gray-400">Check your console for error messages. Common issues include missing dependencies, syntax errors, or incorrect startup file configuration.</p>
+                    </div>
+
+                    <div class="border-b border-white/10 pb-6">
+                        <h3 class="text-lg font-bold text-white mb-2">Can I upload my own files?</h3>
+                        <p class="text-gray-400">Yes! Use the Files tab in your server panel to upload, edit, and manage your files. You can also upload ZIP files for bulk uploads.</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-white mb-2">How do I backup my server?</h3>
+                        <p class="text-gray-400">Go to the Backup tab in your server panel. You can create manual backups or enable automatic backups.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Hours -->
+            <div class="mt-8 text-center">
+                <div class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-green-500/10 border border-green-500/20 text-green-400">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    Support available 24/7 on Discord
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center border-t border-white/5 text-gray-600 bg-black">
+        <p class="mb-2">&copy; 2026 <%= sitename %></p>
+        <div class="flex justify-center gap-6 text-sm mt-4">
+            <a href="/terms" class="hover:text-white transition">Terms of Service</a>
+            <a href="/privacy" class="hover:text-white transition">Privacy Policy</a>
+            <a href="/contact" class="text-indigo-400">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

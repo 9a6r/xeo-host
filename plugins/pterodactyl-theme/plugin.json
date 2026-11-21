@@ -1,0 +1,33 @@
+{
+    "id": "pterodactyl-theme",
+    "name": "Pterodactyl Theme",
+    "version": "1.0.0",
+    "description": "ثيم مستوحى من Pterodactyl Panel - داكن واحترافي",
+    "author": "XeoStudio",
+    "type": "theme",
+    "icon": "fa-solid fa-feather",
+    "css": "theme.css",
+    "main": "index.js",
+    "primaryColor": "linear-gradient(135deg, #1a1a2e, #16213e)",
+    "configurable": true,
+    "config": [
+        {
+            "name": "accentColor",
+            "label": "Accent Color",
+            "type": "color",
+            "default": "#ef4444",
+            "description": "اللون الرئيسي للأزرار والعناصر المميزة"
+        },
+        {
+            "name": "sidebarStyle",
+            "label": "Sidebar Style",
+            "type": "select",
+            "default": "dark",
+            "options": [
+                {"value": "dark", "label": "Dark"},
+                {"value": "darker", "label": "Darker"},
+                {"value": "gradient", "label": "Gradient"}
+            ]
+        }
+    ]
+}

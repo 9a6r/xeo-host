@@ -1,0 +1,131 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center gap-4 mb-8">
+        <a href="/admin/plugins" class="bg-white/10 p-3 rounded-xl hover:bg-white/20 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                <%= plugin.name %> Settings
+            </h2>
+            <p class="text-gray-400 text-sm">v<%= plugin.version || '1.0.0' %></p>
+        </div>
+    </div>
+
+    <div class="glass p-8 rounded-3xl border border-white/5">
+        <% if (plugin.config && plugin.config.length > 0) { %>
+        <form action="/admin/plugins/settings/<%= plugin.id %>" method="POST" class="space-y-6">
+            <% plugin.config.forEach(field => { %>
+            <div>
+                <label class="block text-sm font-bold text-gray-400 mb-2">
+                    <%= field.label || field.name %>
+                    <% if (field.required) { %><span class="text-red-400">*</span><% } %>
+                </label>
+                
+                <% if (field.type === 'text' || field.type === 'string') { %>
+                <input type="text" name="<%= field.name %>" 
+                    value="<%= plugin.settings[field.name] || field.default || '' %>"
+                    placeholder="<%= field.placeholder || '' %>"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition"
+                    <%= field.required ? 'required' : '' %>>
+                
+                <% } else if (field.type === 'number') { %>
+                <input type="number" name="<%= field.name %>" 
+                    value="<%= plugin.settings[field.name] || field.default || '' %>"
+                    min="<%= field.min %>" max="<%= field.max %>"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition"
+                    <%= field.required ? 'required' : '' %>>
+                
+                <% } else if (field.type === 'textarea') { %>
+                <textarea name="<%= field.name %>" rows="4"
+                    placeholder="<%= field.placeholder || '' %>"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition resize-none"
+                    <%= field.required ? 'required' : '' %>><%= plugin.settings[field.name] || field.default || '' %></textarea>
+                
+                <% } else if (field.type === 'select') { %>
+                <select name="<%= field.name %>" 
+                    class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition">
+                    <% (field.options || []).forEach(opt => { %>
+                    <option value="<%= typeof opt === 'object' ? opt.value : opt %>" 
+                        <%= (plugin.settings[field.name] || field.default) === (typeof opt === 'object' ? opt.value : opt) ? 'selected' : '' %>>
+                        <%= typeof opt === 'object' ? opt.label : opt %>
+                    </option>
+                    <% }) %>
+                </select>
+                
+                <% } else if (field.type === 'boolean' || field.type === 'checkbox') { %>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="<%= field.name %>" value="true"
+                        <%= plugin.settings[field.name] === 'true' || plugin.settings[field.name] === true ? 'checked' : '' %>
+                        class="w-5 h-5 rounded bg-black/40 border border-white/10 text-purple-500 focus:ring-purple-500">
+                    <span class="text-gray-300"><%= field.checkboxLabel || 'Enable' %></span>
+                </label>
+                
+                <% } else if (field.type === 'color') { %>
+                <div class="flex items-center gap-3">
+                    <input type="color" name="<%= field.name %>" 
+                        value="<%= plugin.settings[field.name] || field.default || '#6366f1' %>"
+                        class="w-12 h-12 rounded-xl border border-white/10 cursor-pointer">
+                    <input type="text" value="<%= plugin.settings[field.name] || field.default || '#6366f1' %>"
+                        class="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none"
+                        onchange="this.previousElementSibling.value = this.value"
+                        oninput="this.previousElementSibling.value = this.value">
+                </div>
+                <% } %>
+                
+                <% if (field.description) { %>
+                <p class="text-xs text-gray-500 mt-2"><%= field.description %></p>
+                <% } %>
+            </div>
+            <% }) %>
+
+            <div class="pt-6 border-t border-white/10 flex gap-4">
+                <button type="submit" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 py-4 rounded-xl font-bold hover:opacity-90 transition">
+                    <i class="fa-solid fa-save mr-2"></i> Save Settings
+                </button>
+                <a href="/admin/plugins" class="px-8 py-4 rounded-xl bg-white/10 hover:bg-white/20 transition font-bold">
+                    Cancel
+                </a>
+            </div>
+        </form>
+        <% } else { %>
+        <div class="text-center py-12">
+            <i class="fa-solid fa-gear text-5xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">No Configuration Options</h3>
+            <p class="text-gray-500 text-sm">This plugin doesn't have any configurable settings</p>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Plugin Info -->
+    <div class="glass p-6 rounded-3xl border border-white/5 mt-6">
+        <h3 class="font-bold text-gray-400 uppercase text-xs mb-4">Plugin Information</h3>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <span class="text-gray-500">ID:</span>
+                <span class="text-white ml-2 font-mono"><%= plugin.id %></span>
+            </div>
+            <div>
+                <span class="text-gray-500">Version:</span>
+                <span class="text-white ml-2"><%= plugin.version || '1.0.0' %></span>
+            </div>
+            <div>
+                <span class="text-gray-500">Author:</span>
+                <span class="text-white ml-2"><%= plugin.author || 'Unknown' %></span>
+            </div>
+            <div>
+                <span class="text-gray-500">Type:</span>
+                <span class="text-white ml-2 capitalize"><%= plugin.type || 'plugin' %></span>
+            </div>
+            <% if (plugin.website) { %>
+            <div class="col-span-2">
+                <span class="text-gray-500">Website:</span>
+                <a href="<%= plugin.website %>" target="_blank" class="text-purple-400 ml-2 hover:underline"><%= plugin.website %></a>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

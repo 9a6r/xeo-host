@@ -1,0 +1,308 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                <i class="fa-solid fa-clock mr-3"></i>AFK Rewards
+            </h2>
+            <p class="text-gray-400 mt-1">Stay on this page to earn coins automatically</p>
+        </div>
+        <div id="status" class="flex items-center gap-2 bg-green-500/10 border border-green-500/30 px-4 py-2 rounded-xl">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span class="text-green-400 text-sm font-medium">Active - Earning coins...</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass p-5 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-coins text-yellow-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-yellow-400" id="earnedCoins">0</div>
+                    <div class="text-xs text-gray-500">This Session</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-wallet text-indigo-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-white" id="totalCoins"><%= user.coins %></div>
+                    <div class="text-xs text-gray-500">Total Balance</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-gift text-green-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-green-400"><%= settings.coins %></div>
+                    <div class="text-xs text-gray-500">Per Reward</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-5 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-stopwatch text-orange-400 text-xl"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-orange-400"><%= settings.interval %>s</div>
+                    <div class="text-xs text-gray-500">Interval</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+        <!-- Timer Card -->
+        <div class="glass p-8 rounded-2xl relative overflow-hidden">
+            <!-- Background Glow -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full blur-3xl"></div>
+            </div>
+            
+            <div class="relative z-10 text-center">
+                <!-- Coin Animation -->
+                <div class="w-20 h-20 mx-auto mb-6 relative">
+                    <div id="coinIcon" class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg shadow-yellow-500/30 transition-transform duration-300">
+                        <i class="fa-solid fa-coins text-3xl text-yellow-900"></i>
+                    </div>
+                    <div id="coinPulse" class="absolute inset-0 bg-yellow-400 rounded-full animate-ping opacity-0"></div>
+                </div>
+
+                <div class="text-sm text-gray-400 mb-2">Next Reward In</div>
+                <div class="text-6xl font-mono font-bold text-white mb-2" id="timer"><%= settings.interval %></div>
+                <div class="text-sm text-gray-500 mb-6">seconds</div>
+                
+                <!-- Progress Bar -->
+                <div class="h-3 bg-black/50 rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full transition-all duration-1000 ease-linear" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="space-y-4">
+            <% if(settings.maxDaily > 0) { %>
+            <!-- Daily Limit -->
+            <div class="glass p-5 rounded-2xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-day text-orange-400"></i>
+                        <span class="text-white font-medium">Daily Limit</span>
+                    </div>
+                    <span class="text-white font-bold"><span id="dailyEarned"><%= dailyEarned %></span> / <%= settings.maxDaily %></span>
+                </div>
+                <div class="h-2 bg-black/50 rounded-full overflow-hidden">
+                    <div id="dailyProgressBar" class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all" style="width: <%= Math.min((dailyEarned / settings.maxDaily) * 100, 100) %>%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Resets daily at midnight UTC</p>
+            </div>
+            <% } %>
+
+            <!-- How it Works -->
+            <div class="glass p-5 rounded-2xl">
+                <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-indigo-400"></i>
+                    How it Works
+                </h3>
+                <ul class="space-y-3 text-sm text-gray-400">
+                    <li class="flex items-start gap-3">
+                        <span class="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-yellow-400 text-xs font-bold">1</span>
+                        </span>
+                        <span>Keep this page open and active</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-yellow-400 text-xs font-bold">2</span>
+                        </span>
+                        <span>Wait for the timer to reach zero</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="w-6 h-6 bg-yellow-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-yellow-400 text-xs font-bold">3</span>
+                        </span>
+                        <span>Earn <strong class="text-yellow-400"><%= settings.coins %> coins</strong> automatically!</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tips -->
+            <div class="glass p-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/5">
+                <div class="flex items-start gap-3">
+                    <i class="fa-solid fa-lightbulb text-yellow-400 mt-0.5"></i>
+                    <div>
+                        <h4 class="text-yellow-400 font-medium mb-1">Pro Tip</h4>
+                        <p class="text-sm text-gray-400">Switching tabs or minimizing the browser will pause your rewards. Keep this tab visible for continuous earning!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const interval = <%= settings.interval %>;
+    const coinsPerReward = <%= settings.coins %>;
+    const maxDaily = <%= settings.maxDaily %>;
+    let dailyEarned = <%= dailyEarned %>;
+    let earnedThisSession = 0;
+    let totalCoins = <%= user.coins %>;
+    let timeLeft = interval;
+    let isActive = true;
+    let timerInterval;
+
+    const timerEl = document.getElementById('timer');
+    const progressBar = document.getElementById('progressBar');
+    const earnedCoinsEl = document.getElementById('earnedCoins');
+    const totalCoinsEl = document.getElementById('totalCoins');
+    const dailyEarnedEl = document.getElementById('dailyEarned');
+    const dailyProgressBar = document.getElementById('dailyProgressBar');
+    const statusEl = document.getElementById('status');
+    const coinIcon = document.getElementById('coinIcon');
+    const coinPulse = document.getElementById('coinPulse');
+
+    function updateTimer() {
+        if (!isActive) return;
+        
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        
+        // Update progress bar
+        const progress = ((interval - timeLeft) / interval) * 100;
+        progressBar.style.width = progress + '%';
+        
+        if (timeLeft <= 0) {
+            claimReward();
+        }
+    }
+
+    function claimReward() {
+        // Check daily limit
+        if (maxDaily > 0 && dailyEarned >= maxDaily) {
+            setStatus('limit');
+            clearInterval(timerInterval);
+            return;
+        }
+
+        // Send claim request
+        fetch('/afk/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI
+                earnedThisSession += data.coins;
+                totalCoins = data.newBalance;
+                dailyEarned = data.dailyEarned;
+                
+                earnedCoinsEl.textContent = earnedThisSession;
+                totalCoinsEl.textContent = totalCoins;
+                if (dailyEarnedEl) dailyEarnedEl.textContent = dailyEarned;
+                if (dailyProgressBar && maxDaily > 0) {
+                    dailyProgressBar.style.width = Math.min((dailyEarned / maxDaily) * 100, 100) + '%';
+                }
+                
+                // Coin animation
+                coinIcon.classList.add('scale-125');
+                coinPulse.classList.remove('opacity-0');
+                coinPulse.classList.add('opacity-75');
+                
+                setTimeout(() => {
+                    coinIcon.classList.remove('scale-125');
+                    coinPulse.classList.add('opacity-0');
+                    coinPulse.classList.remove('opacity-75');
+                }, 500);
+                
+                // Show notification
+                showRewardNotification(data.coins);
+                
+                // Check if daily limit reached
+                if (maxDaily > 0 && dailyEarned >= maxDaily) {
+                    setStatus('limit');
+                    clearInterval(timerInterval);
+                    return;
+                }
+            } else if (data.error === 'daily_limit') {
+                setStatus('limit');
+                clearInterval(timerInterval);
+                return;
+            }
+            
+            // Reset timer
+            timeLeft = interval;
+            progressBar.style.width = '0%';
+        })
+        .catch(err => {
+            console.error('Claim error:', err);
+            timeLeft = interval;
+        });
+    }
+
+    function setStatus(type) {
+        if (type === 'active') {
+            statusEl.className = 'flex items-center gap-2 bg-green-500/10 border border-green-500/30 px-4 py-2 rounded-xl';
+            statusEl.innerHTML = '<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span><span class="text-green-400 text-sm font-medium">Active - Earning coins...</span>';
+        } else if (type === 'paused') {
+            statusEl.className = 'flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 px-4 py-2 rounded-xl';
+            statusEl.innerHTML = '<span class="w-2 h-2 bg-orange-400 rounded-full"></span><span class="text-orange-400 text-sm font-medium">Paused - Tab not active</span>';
+        } else if (type === 'limit') {
+            statusEl.className = 'flex items-center gap-2 bg-red-500/10 border border-red-500/30 px-4 py-2 rounded-xl';
+            statusEl.innerHTML = '<span class="w-2 h-2 bg-red-400 rounded-full"></span><span class="text-red-400 text-sm font-medium">Daily limit reached!</span>';
+        }
+    }
+
+    function showRewardNotification(coins) {
+        const notif = document.createElement('div');
+        notif.className = 'fixed top-20 right-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-6 py-3 rounded-xl font-bold shadow-2xl z-50 flex items-center gap-2';
+        notif.innerHTML = '<i class="fa-solid fa-coins text-xl"></i><span class="text-lg">+' + coins + ' Coins!</span>';
+        notif.style.animation = 'slideIn 0.3s ease-out, slideOut 0.3s ease-in 1.7s forwards';
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 2000);
+    }
+
+    // Visibility change detection
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            isActive = false;
+            setStatus('paused');
+        } else {
+            isActive = true;
+            if (maxDaily === 0 || dailyEarned < maxDaily) {
+                setStatus('active');
+            }
+        }
+    });
+
+    // Start timer
+    timerInterval = setInterval(updateTimer, 1000);
+})();
+</script>
+
+<style>
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100px); }
+}
+</style>
+
+<%- include('./partials/footer') %>

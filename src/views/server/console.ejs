@@ -1,0 +1,445 @@
+<%- include('../partials/header') %>
+<%- include('../partials/server/header') %>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <!-- Console Section (Left - 2 cols) -->
+    <div class="lg:col-span-2">
+        <!-- Console Toolbar -->
+        <div class="glass p-3 mb-3 rounded-xl flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <button onclick="clearConsole()" class="bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition">
+                    <i class="fa-solid fa-broom mr-1"></i>Clear
+                </button>
+                <button onclick="scrollToBottom()" class="bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white px-3 py-2 rounded-lg text-xs font-bold transition">
+                    <i class="fa-solid fa-arrow-down mr-1"></i>Bottom
+                </button>
+            </div>
+            <div class="text-xs text-gray-500" id="socket-status">
+                <i class="fa-solid fa-circle text-red-500 mr-1"></i>Disconnected
+            </div>
+        </div>
+
+        <!-- Console Output -->
+        <div class="bg-[#0a0a0c] rounded-xl border border-white/10 shadow-inner relative">
+            <!-- Console Header -->
+            <div class="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-black/50">
+                <span class="text-gray-500 text-xs font-mono">Console Output</span>
+                <span class="text-gray-600 text-[10px] font-mono" id="logCount">0 lines</span>
+            </div>
+            
+            <!-- Console Body -->
+            <div id="term" class="h-[400px] md:h-[500px] overflow-y-auto p-4 font-mono text-xs md:text-sm whitespace-pre-wrap leading-relaxed text-gray-300 custom-scroll"></div>
+            
+            <!-- Command Input -->
+            <div class="border-t border-white/10 bg-black/50 p-3" id="commandInputSection">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 text-gray-500">
+                        <% if (typeof consoleCommandsEnabled !== 'undefined' && consoleCommandsEnabled) { %>
+                        <i class="fa-solid fa-terminal text-xs text-indigo-400"></i>
+                        <span class="text-xs font-mono text-indigo-400">&gt;&gt;</span>
+                        <% } else { %>
+                        <i class="fa-solid fa-keyboard text-xs text-gray-500"></i>
+                        <span class="text-xs font-mono text-gray-500">&gt;&gt;</span>
+                        <% } %>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="commandInput" 
+                        placeholder="<%= (typeof consoleCommandsEnabled !== 'undefined' && consoleCommandsEnabled) ? 'Type a command and press Enter...' : 'Type text to send to console...' %>" 
+                        class="flex-1 bg-transparent text-gray-200 text-sm font-mono outline-none placeholder-gray-600"
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                    <button onclick="sendCommand()" class="<%= (typeof consoleCommandsEnabled !== 'undefined' && consoleCommandsEnabled) ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-gray-600 hover:bg-gray-500' %> text-white px-4 py-1.5 rounded-lg text-xs font-bold transition">
+                        <i class="fa-solid fa-paper-plane mr-1"></i>Send
+                    </button>
+                </div>
+                <!-- Hints -->
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-4 text-[10px] text-gray-600">
+                        <span><i class="fa-solid fa-arrow-up mr-1"></i>/<i class="fa-solid fa-arrow-down ml-1"></i> History</span>
+                        <span><kbd class="bg-white/10 px-1.5 py-0.5 rounded">Enter</kbd> Send</span>
+                        <span><kbd class="bg-white/10 px-1.5 py-0.5 rounded">Esc</kbd> Clear</span>
+                    </div>
+                    <% if (typeof consoleCommandsEnabled === 'undefined' || !consoleCommandsEnabled) { %>
+                    <span class="text-[10px] text-yellow-500/70">
+                        <i class="fa-solid fa-info-circle mr-1"></i>Text only mode
+                    </span>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Info Sidebar (Right - 1 col) -->
+    <div class="space-y-3">
+        <!-- Uptime -->
+        <div class="glass rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-clock text-green-400"></i>
+                </div>
+                <span class="text-gray-400 text-sm">Uptime</span>
+            </div>
+            <span id="uptime" class="font-bold text-white">Offline</span>
+        </div>
+
+        <!-- CPU Load -->
+        <div class="glass rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-microchip text-indigo-400"></i>
+                </div>
+                <span class="text-gray-400 text-sm">CPU Load</span>
+            </div>
+            <span id="cpu" class="font-bold text-white font-mono">0%</span>
+        </div>
+
+        <!-- Memory -->
+        <div class="glass rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-memory text-purple-400"></i>
+                </div>
+                <span class="text-gray-400 text-sm">Memory</span>
+            </div>
+            <span id="ram" class="font-bold text-white font-mono">0 MB</span>
+        </div>
+
+        <!-- Disk -->
+        <div class="glass rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-hard-drive text-cyan-400"></i>
+                </div>
+                <span class="text-gray-400 text-sm">Disk</span>
+            </div>
+            <span class="font-bold text-white font-mono"><%= s.disk || 1024 %> MB</span>
+        </div>
+
+        <!-- Server ID -->
+        <div class="glass rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-fingerprint text-orange-400"></i>
+                </div>
+                <span class="text-gray-400 text-sm">Server ID</span>
+            </div>
+            <span class="font-bold text-white font-mono text-sm"><%= s.id %></span>
+        </div>
+
+        <!-- Limits Info -->
+        <div class="glass rounded-xl p-4">
+            <div class="flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-gauge text-yellow-400"></i>
+                <span class="text-gray-400 text-sm font-bold">Resource Limits</span>
+            </div>
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Max CPU</span>
+                    <span class="text-white font-mono"><%= s.cpu || 50 %>%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Max RAM</span>
+                    <span class="text-white font-mono"><%= s.ram || 512 %> MB</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Max Disk</span>
+                    <span class="text-white font-mono"><%= s.disk || 1024 %> MB</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Socket & Actions -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const term = document.getElementById('term');
+const sockStatus = document.getElementById('socket-status');
+let logCount = 0;
+let autoScroll = true;
+
+// تتبع السكرول - إذا المستخدم سكرول لفوق، نوقف الـ auto scroll
+term.addEventListener('scroll', () => {
+    const isAtBottom = term.scrollHeight - term.scrollTop <= term.clientHeight + 50;
+    autoScroll = isAtBottom;
+});
+
+// Connection Events
+socket.on('connect', () => {
+    sockStatus.innerHTML = '<i class="fa-solid fa-circle text-green-500 mr-1 animate-pulse"></i>Connected';
+    socket.emit('join','<%= s.id %>');
+    addLog("System", "Connected to live console.", "text-blue-400");
+});
+
+socket.on('disconnect', () => {
+    sockStatus.innerHTML = '<i class="fa-solid fa-circle text-red-500 mr-1"></i>Disconnected';
+    addLog("System", "Connection lost...", "text-red-400");
+});
+
+socket.on('connect_error', (err) => {
+    sockStatus.innerHTML = '<i class="fa-solid fa-circle text-yellow-500 mr-1"></i>Error';
+    addLog("Error", "Socket connection failed: " + err, "text-red-400");
+});
+
+// Console Cleared Event
+socket.on('consoleCleared', () => {
+    term.innerHTML = '';
+    logCount = 0;
+    document.getElementById('logCount').innerText = '0 lines';
+    addLog("System", "Console cleared.", "text-gray-500");
+});
+
+// Logs
+socket.on('log', data => {
+    // التعامل مع الـ format الجديد (object) أو القديم (string)
+    let msg, time;
+    if (typeof data === 'object' && data.msg) {
+        msg = data.msg;
+        time = data.time;
+    } else {
+        msg = data;
+        time = null;
+    }
+    const clean = msg.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,'');
+    addLog(null, clean, null, time);
+});
+
+// Status & Stats
+const maxCpu = <%= s.cpu || 50 %>;
+const maxRam = <%= s.ram || 512 %>;
+let serverStartTime = null;
+let uptimeInterval = null;
+
+socket.on('status', data => {
+    const uptimeEl = document.getElementById('uptime');
+    
+    // Handle both old format (string) and new format (object)
+    let status, startTime;
+    if (typeof data === 'object') {
+        status = data.status;
+        startTime = data.startTime;
+    } else {
+        status = data;
+        startTime = null;
+    }
+    
+    if(status === 'online') {
+        // Use server's start time if provided, otherwise use current time
+        serverStartTime = startTime || Date.now();
+        if (uptimeInterval) clearInterval(uptimeInterval);
+        uptimeInterval = setInterval(updateUptime, 1000);
+        updateUptime();
+    } else if(status === 'installing') {
+        uptimeEl.innerText = 'Installing...';
+    } else {
+        // Reset stats when offline
+        document.getElementById('cpu').innerText = '0%';
+        document.getElementById('ram').innerText = '0 MB';
+        uptimeEl.innerText = 'Offline';
+        
+        // Stop uptime counter
+        serverStartTime = null;
+        if (uptimeInterval) {
+            clearInterval(uptimeInterval);
+            uptimeInterval = null;
+        }
+    }
+});
+
+socket.on('stats', d => {
+    document.getElementById('cpu').innerText = d.cpu + '%';
+    document.getElementById('ram').innerText = d.ram + ' MB';
+});
+
+// Update uptime display
+function updateUptime() {
+    if (!serverStartTime) return;
+    
+    const elapsed = Math.floor((Date.now() - serverStartTime) / 1000);
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+    
+    let uptimeStr = '';
+    if (hours > 0) {
+        uptimeStr = `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+        uptimeStr = `${minutes}m ${seconds}s`;
+    } else {
+        uptimeStr = `${seconds}s`;
+    }
+    
+    document.getElementById('uptime').innerText = uptimeStr;
+}
+
+// Add Log
+function addLog(source, msg, colorClass, timestamp) {
+    const div = document.createElement('div');
+    div.className = 'py-0.5 hover:bg-white/5 rounded px-1 -mx-1';
+    
+    // استخدام الوقت المرسل من السيرفر أو الوقت الحالي
+    let time;
+    if (timestamp) {
+        time = new Date(timestamp).toLocaleTimeString('en-US', { hour12: false });
+    } else {
+        time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    
+    if(source) {
+        div.innerHTML = `<span class="text-gray-600 text-[10px]">[${time}]</span> <span class="${colorClass || 'text-cyan-400'}">[${source}]</span> ${escapeHtml(msg)}`;
+    } else {
+        // تلوين الرسائل حسب المحتوى
+        let msgColor = 'text-gray-300';
+        if(msg.includes('error') || msg.includes('Error') || msg.includes('ERROR')) msgColor = 'text-red-400';
+        else if(msg.includes('warn') || msg.includes('Warning') || msg.includes('WARN')) msgColor = 'text-yellow-400';
+        else if(msg.includes('success') || msg.includes('✅') || msg.includes('online') || msg.includes('Online')) msgColor = 'text-green-400';
+        else if(msg.includes('🟢') || msg.includes('🔴') || msg.includes('🟡')) msgColor = 'text-gray-300';
+        
+        div.innerHTML = `<span class="text-gray-600 text-[10px]">[${time}]</span> <span class="${msgColor}">${escapeHtml(msg)}</span>`;
+    }
+    
+    term.appendChild(div);
+    logCount++;
+    document.getElementById('logCount').innerText = logCount + ' lines';
+    
+    // Auto scroll إذا المستخدم في الأسفل
+    if(autoScroll) {
+        term.scrollTop = term.scrollHeight;
+    }
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Clear Console via Socket
+function clearConsole() {
+    socket.emit('clearConsole', { serverId: '<%= s.id %>' });
+}
+
+// Scroll to Bottom
+function scrollToBottom() {
+    term.scrollTop = term.scrollHeight;
+    autoScroll = true;
+}
+
+// Power Actions
+function p(action){
+    addLog("User", "Sending signal: " + action, "text-purple-400");
+    fetch('/server/<%= s.id %>/power',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.ok && data.error) {
+            addLog("Error", "⛔ " + data.error, "text-red-400");
+        }
+    });
+}
+
+// ========== COMMAND INPUT ==========
+const commandInput = document.getElementById('commandInput');
+const commandsEnabled = <%= typeof consoleCommandsEnabled !== 'undefined' && consoleCommandsEnabled %>;
+const commandHistory = [];
+let historyIndex = -1;
+
+// Send command/text
+window.sendCommand = function() {
+    const cmd = commandInput.value.trim();
+    if (!cmd) return;
+    
+    // Add to history
+    commandHistory.unshift(cmd);
+    if (commandHistory.length > 50) commandHistory.pop();
+    historyIndex = -1;
+    
+    // Show in console with different style based on mode
+    if (commandsEnabled) {
+        addLog("Command", cmd, "text-yellow-400");
+    } else {
+        addLog("Input", cmd, "text-gray-400");
+    }
+    
+    // Send via socket
+    socket.emit('command', {
+        serverId: '<%= s.id %>',
+        command: cmd
+    });
+    
+    // Clear input
+    commandInput.value = '';
+}
+
+// Keyboard shortcuts
+commandInput.addEventListener('keydown', (e) => {
+    // Enter - Send command
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendCommand();
+    }
+    
+    // Escape - Clear input
+    if (e.key === 'Escape') {
+        commandInput.value = '';
+        historyIndex = -1;
+    }
+    
+    // Arrow Up - Previous command
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (commandHistory.length > 0 && historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = commandHistory[historyIndex];
+            // Move cursor to end
+            setTimeout(() => commandInput.setSelectionRange(commandInput.value.length, commandInput.value.length), 0);
+        }
+    }
+    
+    // Arrow Down - Next command
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+            historyIndex--;
+            commandInput.value = commandHistory[historyIndex];
+        } else if (historyIndex === 0) {
+            historyIndex = -1;
+            commandInput.value = '';
+        }
+    }
+});
+
+// Handle command response
+socket.on('commandResponse', (data) => {
+    if (data.error) {
+        addLog("Error", data.error, "text-red-400");
+    } else if (data.output) {
+        addLog("Output", data.output, "text-green-400");
+    }
+});
+
+// Focus input on page load
+commandInput.focus();
+
+// Click on console to focus input
+term.addEventListener('click', () => {
+    commandInput.focus();
+});
+</script>
+
+<style>
+    .custom-scroll::-webkit-scrollbar { width: 8px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0a0a0c; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #444; }
+</style>
+
+<%- include('../partials/footer') %>

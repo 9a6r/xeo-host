@@ -1,0 +1,856 @@
+<%- include('partials/header') %>
+
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                <i class="fa-solid fa-server mr-3"></i><span id="dashboardTitle">My Servers</span>
+            </h2>
+            <p class="text-gray-400 mt-1" id="dashboardSubtitle">Manage your active deployments</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <% if(user.isAdmin) { %>
+            <!-- Admin Toggle Switch -->
+            <div class="flex items-center gap-3 bg-[#1a1a1f] border border-white/5 px-4 py-2.5 rounded-xl">
+                <span class="text-gray-400 text-sm">View All Servers</span>
+                <button id="adminToggle" onclick="toggleAdminView()" class="relative w-11 h-6 rounded-full transition-colors duration-300 bg-gray-700" role="switch" aria-checked="false">
+                    <span id="toggleDot" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300"></span>
+                </button>
+            </div>
+            <% } %>
+            
+            <!-- Notification Bell Button -->
+            <div class="relative">
+                <button onclick="toggleNotifications()" class="notification-bell relative w-11 h-11 bg-[#1a1a1f] hover:bg-[#252530] border border-white/5 text-gray-400 hover:text-white rounded-xl transition-all duration-200 flex items-center justify-center">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+                    <span class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-bold animate-pulse"><%= announcements.length %></span>
+                    <% } %>
+                </button>
+            
+            <!-- Notifications Dropdown - Desktop -->
+            <div id="notificationsDropdown" class="hidden md:block opacity-0 invisible absolute right-0 top-full mt-3 w-80 bg-[#0d0d0f] rounded-2xl border border-white/5 shadow-2xl shadow-black/50 z-50 overflow-hidden transition-all duration-200 transform scale-95 origin-top-right">
+                <!-- Header -->
+                <div class="p-4 border-b border-white/5 flex items-center justify-between bg-[#111114]">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-gray-400"></i>
+                        <span class="text-white font-semibold text-sm">Notifications</span>
+                    </div>
+                    <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+                    <button onclick="markAllAsRead()" class="text-xs text-gray-500 hover:text-white transition">
+                        Mark all read
+                    </button>
+                    <% } %>
+                </div>
+                
+                <!-- Content -->
+                <div class="max-h-[320px] overflow-y-auto custom-scrollbar" id="notifications-content">
+                    <% if (typeof announcements === 'undefined' || announcements.length === 0) { %>
+                    <div class="p-10 text-center">
+                        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                            <i class="fa-solid fa-bell-slash text-2xl text-gray-600"></i>
+                        </div>
+                        <p class="text-gray-500 text-sm">No notifications</p>
+                        <p class="text-gray-600 text-xs mt-1">You're all caught up!</p>
+                    </div>
+                    <% } else { %>
+                    <div class="divide-y divide-white/5">
+                        <% announcements.forEach(announcement => { %>
+                        <div class="notification-item p-4 hover:bg-white/[0.02] transition-colors cursor-pointer flex gap-3 group" 
+                             data-id="<%= announcement.id %>" 
+                             data-type="<%= announcement.type %>"
+                             onclick="viewAnnouncement(<%= announcement.id %>)">
+                            <!-- Icon -->
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0
+                                <%= announcement.type === 'info' ? 'bg-blue-500/10' : '' %>
+                                <%= announcement.type === 'success' ? 'bg-green-500/10' : '' %>
+                                <%= announcement.type === 'warning' ? 'bg-yellow-500/10' : '' %>
+                                <%= announcement.type === 'error' ? 'bg-red-500/10' : '' %>
+                                <%= announcement.type === 'update' ? 'bg-purple-500/10' : '' %>
+                            ">
+                                <% if (announcement.type === 'info') { %>
+                                <i class="fa-solid fa-info text-blue-400 text-sm"></i>
+                                <% } else if (announcement.type === 'success') { %>
+                                <i class="fa-solid fa-check text-green-400 text-sm"></i>
+                                <% } else if (announcement.type === 'warning') { %>
+                                <i class="fa-solid fa-exclamation text-yellow-400 text-sm"></i>
+                                <% } else if (announcement.type === 'error') { %>
+                                <i class="fa-solid fa-times text-red-400 text-sm"></i>
+                                <% } else if (announcement.type === 'update') { %>
+                                <i class="fa-solid fa-rocket text-purple-400 text-sm"></i>
+                                <% } else { %>
+                                <i class="fa-solid fa-bell text-gray-400 text-sm"></i>
+                                <% } %>
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p class="text-white text-sm font-medium truncate"><%= announcement.title %></p>
+                                    <span class="text-gray-600 text-[10px] whitespace-nowrap"><%= timeAgo(new Date(announcement.created_at)) %></span>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1 line-clamp-2"><%= announcement.content ? announcement.content.substring(0, 60) + (announcement.content.length > 60 ? '...' : '') : '' %></p>
+                                
+                                <!-- Dismiss button -->
+                                <button onclick="event.stopPropagation(); dismissAnnouncement(<%= announcement.id %>)" 
+                                        class="mt-2 text-[10px] text-gray-600 hover:text-gray-400 transition opacity-0 group-hover:opacity-100">
+                                    <i class="fa-solid fa-xmark mr-1"></i>Dismiss
+                                </button>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+            <button onclick="document.getElementById('cModal').classList.remove('hidden')" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-plus"></i> Deploy
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass p-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-server text-indigo-400"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-white" id="totalServers"><%= servers.length %></div>
+                    <div class="text-xs text-gray-500">Total Servers</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-circle-check text-green-400"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-green-400" id="onlineServers">0</div>
+                    <div class="text-xs text-gray-500">Online</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gray-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-circle-xmark text-gray-400"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-gray-400" id="offlineServers"><%= servers.length %></div>
+                    <div class="text-xs text-gray-500">Offline</div>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-coins text-yellow-400"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-yellow-400"><%= user.coins %></div>
+                    <div class="text-xs text-gray-500">Coins</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Click outside to close - Desktop -->
+<div id="notificationsOverlay" class="hidden fixed inset-0 z-40" onclick="closeNotifications()"></div>
+
+<!-- Mobile Notifications Panel -->
+<div id="mobileNotificationsPanel" class="md:hidden fixed inset-0 bg-black/95 z-[55] transform translate-y-full transition-transform duration-300 ease-out">
+    <div class="h-full flex flex-col">
+        <!-- Mobile Header -->
+        <div class="p-4 border-b border-white/5 flex items-center justify-between bg-[#0d0d0f] safe-area-top">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-bell text-gray-400"></i>
+                <span class="text-white font-semibold">Notifications</span>
+            </div>
+            <button onclick="closeMobileNotifications()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Content -->
+        <div class="flex-1 overflow-y-auto" id="mobile-notifications-content">
+            <% if (typeof announcements === 'undefined' || announcements.length === 0) { %>
+            <div class="p-10 text-center mt-10">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                    <i class="fa-solid fa-bell-slash text-3xl text-gray-600"></i>
+                </div>
+                <p class="text-gray-500">No notifications</p>
+                <p class="text-gray-600 text-sm mt-1">You're all caught up!</p>
+            </div>
+            <% } else { %>
+            <div class="divide-y divide-white/5">
+                <% announcements.forEach(announcement => { %>
+                <div class="mobile-notification-item p-4 active:bg-white/5 transition-colors cursor-pointer flex gap-4" 
+                     data-id="<%= announcement.id %>" 
+                     data-type="<%= announcement.type %>"
+                     onclick="viewAnnouncement(<%= announcement.id %>)">
+                    <!-- Icon -->
+                    <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0
+                        <%= announcement.type === 'info' ? 'bg-blue-500/10' : '' %>
+                        <%= announcement.type === 'success' ? 'bg-green-500/10' : '' %>
+                        <%= announcement.type === 'warning' ? 'bg-yellow-500/10' : '' %>
+                        <%= announcement.type === 'error' ? 'bg-red-500/10' : '' %>
+                        <%= announcement.type === 'update' ? 'bg-purple-500/10' : '' %>
+                    ">
+                        <% if (announcement.type === 'info') { %>
+                        <i class="fa-solid fa-info text-blue-400"></i>
+                        <% } else if (announcement.type === 'success') { %>
+                        <i class="fa-solid fa-check text-green-400"></i>
+                        <% } else if (announcement.type === 'warning') { %>
+                        <i class="fa-solid fa-exclamation text-yellow-400"></i>
+                        <% } else if (announcement.type === 'error') { %>
+                        <i class="fa-solid fa-times text-red-400"></i>
+                        <% } else if (announcement.type === 'update') { %>
+                        <i class="fa-solid fa-rocket text-purple-400"></i>
+                        <% } else { %>
+                        <i class="fa-solid fa-bell text-gray-400"></i>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-white font-medium"><%= announcement.title %></p>
+                            <span class="text-gray-600 text-xs whitespace-nowrap"><%= timeAgo(new Date(announcement.created_at)) %></span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-1 line-clamp-2"><%= announcement.content ? announcement.content.substring(0, 80) + (announcement.content.length > 80 ? '...' : '') : '' %></p>
+                    </div>
+                    
+                    <!-- Swipe indicator -->
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-chevron-right text-gray-700"></i>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+            
+            <!-- Mark all as read button -->
+            <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+            <div class="p-4">
+                <button onclick="markAllAsRead()" class="w-full py-3 text-center text-gray-500 hover:text-white transition text-sm">
+                    <i class="fa-solid fa-check-double mr-2"></i>Mark all as read
+                </button>
+            </div>
+            <% } %>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- View Announcement Modal -->
+<div id="viewAnnouncementModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-end md:items-center justify-center">
+    <div class="bg-[#0d0d0f] md:rounded-2xl rounded-t-3xl border-t md:border border-white/5 w-full md:max-w-md shadow-2xl max-h-[85vh] md:max-h-none overflow-hidden">
+        <!-- Drag handle for mobile -->
+        <div class="md:hidden w-10 h-1 bg-gray-700 rounded-full mx-auto mt-3"></div>
+        
+        <div class="p-4 md:p-5 border-b border-white/5 flex items-center justify-between">
+            <span class="text-white font-semibold" id="view-announcement-title">Announcement</span>
+            <button onclick="closeViewAnnouncement()" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="p-5 md:p-6">
+            <div id="view-announcement-icon" class="w-12 h-12 rounded-full flex items-center justify-center mb-4 bg-blue-500/10">
+                <i class="fa-solid fa-info text-blue-400 text-lg"></i>
+            </div>
+            <p class="text-gray-300 text-sm leading-relaxed mb-4" id="view-announcement-content"></p>
+            <p class="text-gray-600 text-xs" id="view-announcement-date"></p>
+        </div>
+        <div class="p-4 md:p-5 border-t border-white/5 flex gap-3 safe-area-bottom">
+            <button onclick="dismissCurrentAnnouncement()" class="flex-1 bg-white/5 hover:bg-white/10 text-white py-3 rounded-xl transition font-medium text-sm">
+                <i class="fa-solid fa-check mr-2"></i>Got it
+            </button>
+        </div>
+    </div>
+</div>
+
+<%
+function timeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    const intervals = {
+        y: 31536000,
+        mo: 2592000,
+        w: 604800,
+        d: 86400,
+        h: 3600,
+        m: 60
+    };
+    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInUnit);
+        if (interval >= 1) return interval + unit;
+    }
+    return 'now';
+}
+%>
+
+    <!-- Servers Container -->
+    <div id="serversContainer">
+        <% if(servers.length === 0) { %>
+        <div class="text-center py-16 border-2 border-dashed border-white/10 rounded-3xl bg-white/5">
+            <div class="w-20 h-20 mx-auto mb-4 bg-gray-800/50 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-server text-4xl text-gray-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">No Servers Yet</h3>
+            <p class="text-gray-500 text-sm mb-6">Deploy your first server to get started</p>
+            <button onclick="document.getElementById('cModal').classList.remove('hidden')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold transition inline-flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Deploy Server
+            </button>
+        </div>
+        <% } else { %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="serversGrid">
+            <% servers.forEach(s => { %>
+            <div class="glass p-5 rounded-2xl relative group hover:border-indigo-500/30 border border-transparent transition-all duration-300 flex flex-col server-card" data-server-id="<%= s.id %>" data-max-cpu="<%= s.cpu || 50 %>" data-max-ram="<%= s.ram || 512 %>">
+                <!-- Header -->
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center">
+                        <i class="fa-solid fa-cube text-indigo-400 text-lg"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <% if(s.isSuspended) { %>
+                        <span class="server-status flex items-center gap-1.5 bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
+                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                            Suspended
+                        </span>
+                        <% } else { %>
+                        <span class="server-status flex items-center gap-1.5 bg-gray-500/10 text-gray-400 border border-gray-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                            Offline
+                        </span>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Info -->
+                <h3 class="text-lg font-bold text-white mb-1 truncate"><%= s.name %></h3>
+                <p class="text-gray-500 text-xs mb-4 font-mono">ID: <%= s.id %></p>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 gap-2 mb-4 mt-auto">
+                    <div class="bg-black/30 p-3 rounded-xl">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] text-gray-500 uppercase font-bold">CPU</span>
+                            <span class="server-cpu-percent text-xs font-mono text-indigo-400">0%</span>
+                        </div>
+                        <div class="h-1.5 bg-black/50 rounded-full overflow-hidden">
+                            <div class="server-cpu-bar h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-black/30 p-3 rounded-xl">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[10px] text-gray-500 uppercase font-bold">RAM</span>
+                            <span class="server-ram-value text-xs font-mono text-purple-400">0 MB</span>
+                        </div>
+                        <div class="h-1.5 bg-black/50 rounded-full overflow-hidden">
+                            <div class="server-ram-bar h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action -->
+                <a href="/server/<%= s.id %>" class="block w-full text-center bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 hover:border-indigo-500 py-2.5 rounded-xl font-bold transition text-sm text-indigo-400 hover:text-white group-hover:bg-indigo-600 group-hover:text-white">
+                    <i class="fa-solid fa-terminal mr-2"></i>Manage
+                </a>
+            </div>
+            <% }) %>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Admin All Servers Container (Hidden by default) -->
+    <div id="allServersContainer" class="hidden">
+        <div class="mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-orange-400">
+                <i class="fa-solid fa-shield"></i>
+                <span class="font-bold">Admin View - All Servers</span>
+            </div>
+            <div class="text-sm text-gray-500">
+                <span id="allServersCount">0</span> servers total
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="allServersGrid">
+            <!-- Will be populated via JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="cModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-opacity">
+    <div class="glass bg-[#151515] p-6 md:p-8 rounded-3xl w-full max-w-md border border-white/10 shadow-2xl">
+        <h3 class="text-2xl font-bold mb-2 text-white">Deploy New Server</h3>
+        <p class="text-gray-400 mb-6 text-sm">Cost: <span class="text-yellow-400 font-bold"><%= price %> Coins</span></p>
+        
+        <form action="/create" method="POST">
+            <label class="text-xs font-bold text-gray-500 uppercase ml-1">Server Name</label>
+            <input name="name" class="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-indigo-500 mt-2 mb-6 transition" placeholder="MyBot" required>
+            
+            <button class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition mb-3 text-white shadow-lg">Deploy Now</button>
+            <button type="button" onclick="document.getElementById('cModal').classList.add('hidden')" class="w-full bg-transparent hover:bg-white/5 py-3 rounded-xl font-bold text-gray-400 transition">Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let adminViewActive = false;
+let onlineCount = 0;
+let offlineCount = <%= servers.length %>;
+let allServersData = [];
+
+// Initialize Socket.IO connection for dashboard
+const dashboardSocket = io('/dashboard', {
+    query: {
+        userId: '<%= user.id %>',
+        isAdmin: '<%= user.isAdmin %>'
+    }
+});
+
+// Connection status
+dashboardSocket.on('connect', () => {
+    console.log('[Dashboard] Connected to real-time updates');
+    updateConnectionStatus(true);
+});
+
+dashboardSocket.on('disconnect', () => {
+    console.log('[Dashboard] Disconnected from real-time updates');
+    updateConnectionStatus(false);
+});
+
+// Handle stats updates for user's servers
+dashboardSocket.on('statsUpdate', (data) => {
+    if (!adminViewActive) {
+        updateServerCards(data);
+    }
+});
+
+// Handle stats updates for all servers (admin)
+dashboardSocket.on('allStatsUpdate', (data) => {
+    if (adminViewActive) {
+        updateServerCards(data);
+    }
+});
+
+// Update connection status indicator
+function updateConnectionStatus(connected) {
+    const indicator = document.getElementById('connectionStatus');
+    if (indicator) {
+        if (connected) {
+            indicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
+            indicator.title = 'Real-time connected';
+        } else {
+            indicator.className = 'w-2 h-2 bg-red-500 rounded-full';
+            indicator.title = 'Disconnected';
+        }
+    }
+}
+
+// Update server cards with new stats
+function updateServerCards(data) {
+    let online = 0;
+    let offline = 0;
+    let total = 0;
+    
+    for (const [serverId, info] of Object.entries(data)) {
+        total++;
+        const card = document.querySelector(`.server-card[data-server-id="${serverId}"]`);
+        if (!card) continue;
+        
+        const statusEl = card.querySelector('.server-status');
+        const cpuPercentEl = card.querySelector('.server-cpu-percent');
+        const cpuBarEl = card.querySelector('.server-cpu-bar');
+        const ramValueEl = card.querySelector('.server-ram-value');
+        const ramBarEl = card.querySelector('.server-ram-bar');
+        
+        const maxCpu = parseInt(card.dataset.maxCpu) || 50;
+        const maxRam = parseInt(card.dataset.maxRam) || 512;
+        
+        // Update status
+        if (statusEl && !statusEl.innerHTML.includes('Suspended')) {
+            if (info.running) {
+                online++;
+                statusEl.className = 'server-status flex items-center gap-1.5 bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase';
+                statusEl.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>Online';
+            } else {
+                offline++;
+                statusEl.className = 'server-status flex items-center gap-1.5 bg-gray-500/10 text-gray-400 border border-gray-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase';
+                statusEl.innerHTML = '<span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>Offline';
+            }
+        } else if (statusEl && statusEl.innerHTML.includes('Suspended')) {
+            // Don't count suspended as online/offline
+        }
+        
+        // Update CPU & RAM
+        if (info.stats) {
+            const cpuPercent = Math.min(parseInt(info.stats.cpu) || 0, 100);
+            const ramMB = parseInt(info.stats.ram) || 0;
+            const ramPercent = Math.min((ramMB / maxRam) * 100, 100);
+            
+            if (cpuPercentEl) cpuPercentEl.textContent = cpuPercent + '%';
+            if (cpuBarEl) cpuBarEl.style.width = cpuPercent + '%';
+            if (ramValueEl) ramValueEl.textContent = ramMB + ' MB';
+            if (ramBarEl) ramBarEl.style.width = ramPercent + '%';
+        } else {
+            if (cpuPercentEl) cpuPercentEl.textContent = '0%';
+            if (cpuBarEl) cpuBarEl.style.width = '0%';
+            if (ramValueEl) ramValueEl.textContent = '0 MB';
+            if (ramBarEl) ramBarEl.style.width = '0%';
+        }
+    }
+    
+    // Update stats cards
+    document.getElementById('onlineServers').textContent = online;
+    document.getElementById('offlineServers').textContent = offline;
+}
+
+// Admin View Toggle
+function toggleAdminView() {
+    adminViewActive = !adminViewActive;
+    const btn = document.getElementById('adminToggle');
+    const dot = document.getElementById('toggleDot');
+    const myServers = document.getElementById('serversContainer');
+    const allServers = document.getElementById('allServersContainer');
+    const title = document.getElementById('dashboardTitle');
+    const subtitle = document.getElementById('dashboardSubtitle');
+    
+    if (adminViewActive) {
+        // Toggle ON
+        btn.classList.remove('bg-gray-700');
+        btn.classList.add('bg-orange-500');
+        dot.style.transform = 'translateX(20px)';
+        btn.setAttribute('aria-checked', 'true');
+        
+        myServers.classList.add('hidden');
+        allServers.classList.remove('hidden');
+        title.textContent = 'All Servers';
+        subtitle.textContent = 'Admin view - All users servers';
+        
+        // Tell socket to send all servers stats
+        dashboardSocket.emit('setViewMode', 'all');
+        loadAllServers();
+    } else {
+        // Toggle OFF
+        btn.classList.remove('bg-orange-500');
+        btn.classList.add('bg-gray-700');
+        dot.style.transform = 'translateX(0)';
+        btn.setAttribute('aria-checked', 'false');
+        
+        myServers.classList.remove('hidden');
+        allServers.classList.add('hidden');
+        title.textContent = 'My Servers';
+        subtitle.textContent = 'Manage your active deployments';
+        document.getElementById('totalServers').textContent = '<%= servers.length %>';
+        
+        // Tell socket to send only user's servers stats
+        dashboardSocket.emit('setViewMode', 'user');
+    }
+}
+
+// Load all servers for admin
+function loadAllServers() {
+    fetch('/dashboard/api/all-servers')
+        .then(res => res.json())
+        .then(data => {
+            allServersData = data.servers;
+            const grid = document.getElementById('allServersGrid');
+            const countEl = document.getElementById('allServersCount');
+            countEl.textContent = data.servers.length;
+            document.getElementById('totalServers').textContent = data.servers.length;
+            
+            grid.innerHTML = data.servers.map(s => `
+                <div class="glass p-5 rounded-2xl relative group hover:border-orange-500/30 border border-transparent transition-all duration-300 flex flex-col server-card" data-server-id="${s.id}" data-max-cpu="${s.cpu || 50}" data-max-ram="${s.ram || 512}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-white/10 flex items-center justify-center">
+                            <i class="fa-solid fa-cube text-orange-400 text-lg"></i>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${s.isSuspended ? `
+                            <span class="server-status flex items-center gap-1.5 bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
+                                <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                                Suspended
+                            </span>` : `
+                            <span class="server-status flex items-center gap-1.5 bg-gray-500/10 text-gray-400 border border-gray-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase">
+                                <span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span>
+                                Offline
+                            </span>`}
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-bold text-white mb-1 truncate">${escapeHtml(s.name)}</h3>
+                    <div class="flex items-center gap-2 mb-4">
+                        <img src="${s.ownerAvatar ? 'https://cdn.discordapp.com/avatars/' + s.ownerId + '/' + s.ownerAvatar + '.png' : 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-5 h-5 rounded-full" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                        <span class="text-gray-500 text-xs">${escapeHtml(s.ownerName || 'Unknown')}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-4 mt-auto">
+                        <div class="bg-black/30 p-3 rounded-xl">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold">CPU</span>
+                                <span class="server-cpu-percent text-xs font-mono text-orange-400">0%</span>
+                            </div>
+                            <div class="h-1.5 bg-black/50 rounded-full overflow-hidden">
+                                <div class="server-cpu-bar h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-xl">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold">RAM</span>
+                                <span class="server-ram-value text-xs font-mono text-red-400">0 MB</span>
+                            </div>
+                            <div class="h-1.5 bg-black/50 rounded-full overflow-hidden">
+                                <div class="server-ram-bar h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="/server/${s.id}" class="block w-full text-center bg-orange-600/20 hover:bg-orange-600 border border-orange-500/30 hover:border-orange-500 py-2.5 rounded-xl font-bold transition text-sm text-orange-400 hover:text-white">
+                        <i class="fa-solid fa-terminal mr-2"></i>Manage
+                    </a>
+                </div>
+            `).join('');
+            
+            // Request stats update for all servers
+            dashboardSocket.emit('requestStats');
+        })
+        .catch(err => console.error('Failed to load all servers:', err));
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Notification Functions
+let currentAnnouncementId = null;
+const announcementsData = <%- JSON.stringify(typeof announcements !== 'undefined' ? announcements : []) %>;
+let notificationsOpen = false;
+
+function toggleNotifications() {
+    // Check if mobile
+    if (window.innerWidth < 768) {
+        openMobileNotifications();
+    } else {
+        toggleDesktopNotifications();
+    }
+}
+
+function toggleDesktopNotifications() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    const overlay = document.getElementById('notificationsOverlay');
+    
+    if (notificationsOpen) {
+        closeNotifications();
+    } else {
+        dropdown.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        // Trigger animation
+        setTimeout(() => {
+            dropdown.classList.remove('opacity-0', 'invisible', 'scale-95');
+            dropdown.classList.add('opacity-100', 'visible', 'scale-100');
+        }, 10);
+        notificationsOpen = true;
+    }
+}
+
+function closeNotifications() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    const overlay = document.getElementById('notificationsOverlay');
+    
+    dropdown.classList.add('opacity-0', 'invisible', 'scale-95');
+    dropdown.classList.remove('opacity-100', 'visible', 'scale-100');
+    overlay.classList.add('hidden');
+    
+    setTimeout(() => {
+        dropdown.classList.add('hidden');
+    }, 200);
+    notificationsOpen = false;
+}
+
+function openMobileNotifications() {
+    const panel = document.getElementById('mobileNotificationsPanel');
+    panel.classList.remove('translate-y-full');
+    panel.classList.add('translate-y-0');
+    document.body.style.overflow = 'hidden';
+    notificationsOpen = true;
+}
+
+function closeMobileNotifications() {
+    const panel = document.getElementById('mobileNotificationsPanel');
+    panel.classList.add('translate-y-full');
+    panel.classList.remove('translate-y-0');
+    document.body.style.overflow = '';
+    notificationsOpen = false;
+}
+
+function viewAnnouncement(id) {
+    currentAnnouncementId = id;
+    const announcement = announcementsData.find(a => a.id === id);
+    if (!announcement) return;
+    
+    document.getElementById('view-announcement-title').textContent = announcement.title;
+    document.getElementById('view-announcement-content').textContent = announcement.content;
+    document.getElementById('view-announcement-date').textContent = new Date(announcement.created_at).toLocaleString();
+    
+    // Update icon
+    const iconContainer = document.getElementById('view-announcement-icon');
+    const typeColors = {
+        info: { bg: 'bg-blue-500/20', icon: 'fa-info', color: 'text-blue-400' },
+        success: { bg: 'bg-green-500/20', icon: 'fa-check', color: 'text-green-400' },
+        warning: { bg: 'bg-yellow-500/20', icon: 'fa-exclamation', color: 'text-yellow-400' },
+        error: { bg: 'bg-red-500/20', icon: 'fa-times', color: 'text-red-400' },
+        update: { bg: 'bg-purple-500/20', icon: 'fa-rocket', color: 'text-purple-400' }
+    };
+    const style = typeColors[announcement.type] || typeColors.info;
+    iconContainer.className = `w-12 h-12 rounded-full flex items-center justify-center mb-4 ${style.bg}`;
+    iconContainer.innerHTML = `<i class="fa-solid ${style.icon} ${style.color} text-xl"></i>`;
+    
+    document.getElementById('viewAnnouncementModal').classList.remove('hidden');
+}
+
+function closeViewAnnouncement() {
+    document.getElementById('viewAnnouncementModal').classList.add('hidden');
+    currentAnnouncementId = null;
+}
+
+function dismissCurrentAnnouncement() {
+    if (currentAnnouncementId) {
+        dismissAnnouncement(currentAnnouncementId);
+        closeViewAnnouncement();
+    }
+}
+
+function dismissAnnouncement(id) {
+    fetch('/dashboard/announcement/' + id + '/read', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Remove from desktop dropdown
+                const desktopEl = document.querySelector(`.notification-item[data-id="${id}"]`);
+                if (desktopEl) {
+                    desktopEl.style.opacity = '0';
+                    desktopEl.style.transform = 'translateX(-20px)';
+                    desktopEl.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        desktopEl.remove();
+                        updateNotificationBadge();
+                        checkEmptyNotifications();
+                    }, 300);
+                }
+                
+                // Remove from mobile panel
+                const mobileEl = document.querySelector(`.mobile-notification-item[data-id="${id}"]`);
+                if (mobileEl) {
+                    mobileEl.style.opacity = '0';
+                    mobileEl.style.transform = 'translateX(-20px)';
+                    mobileEl.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        mobileEl.remove();
+                        updateNotificationBadge();
+                        checkEmptyNotifications();
+                    }, 300);
+                }
+            }
+        })
+        .catch(err => console.error('Failed to dismiss announcement:', err));
+}
+
+function markAllAsRead() {
+    const desktopItems = document.querySelectorAll('.notification-item');
+    const mobileItems = document.querySelectorAll('.mobile-notification-item');
+    
+    // Send requests
+    desktopItems.forEach(item => {
+        const id = item.dataset.id;
+        fetch('/dashboard/announcement/' + id + '/read', { method: 'POST' });
+    });
+    
+    // Animate desktop items out
+    desktopItems.forEach((item, i) => {
+        setTimeout(() => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            item.style.transition = 'all 0.3s ease';
+        }, i * 50);
+    });
+    
+    // Animate mobile items out
+    mobileItems.forEach((item, i) => {
+        setTimeout(() => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            item.style.transition = 'all 0.3s ease';
+        }, i * 50);
+    });
+    
+    setTimeout(() => {
+        checkEmptyNotifications();
+        updateNotificationBadge();
+    }, Math.max(desktopItems.length, mobileItems.length) * 50 + 300);
+}
+
+function checkEmptyNotifications() {
+    const desktopContent = document.getElementById('notifications-content');
+    const mobileContent = document.getElementById('mobile-notifications-content');
+    
+    const emptyHTML = `
+        <div class="p-10 text-center">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                <i class="fa-solid fa-bell-slash text-2xl text-gray-600"></i>
+            </div>
+            <p class="text-gray-500 text-sm">No notifications</p>
+            <p class="text-gray-600 text-xs mt-1">You're all caught up!</p>
+        </div>
+    `;
+    
+    const mobileEmptyHTML = `
+        <div class="p-10 text-center mt-10">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                <i class="fa-solid fa-bell-slash text-3xl text-gray-600"></i>
+            </div>
+            <p class="text-gray-500">No notifications</p>
+            <p class="text-gray-600 text-sm mt-1">You're all caught up!</p>
+        </div>
+    `;
+    
+    if (desktopContent && !desktopContent.querySelector('.notification-item')) {
+        desktopContent.innerHTML = emptyHTML;
+    }
+    
+    if (mobileContent && !mobileContent.querySelector('.mobile-notification-item')) {
+        mobileContent.innerHTML = mobileEmptyHTML;
+    }
+}
+
+function updateNotificationBadge() {
+    const count = document.querySelectorAll('.notification-item').length;
+    const badges = document.querySelectorAll('.notification-badge');
+    badges.forEach(badge => {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
+}
+
+// Close notifications when pressing Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && notificationsOpen) {
+        closeNotifications();
+        closeMobileNotifications();
+    }
+});
+</script>
+
+<%- include('partials/footer') %>

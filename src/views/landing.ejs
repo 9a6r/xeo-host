@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+    <title><%= sitename %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+    <link rel="icon" type="image/png" href="<%= siteLogo %>">
+    <% } %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0a0f;
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Animated Background */
+        .bg-grid {
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+        
+        .float-1 { animation: float 8s ease-in-out infinite; }
+        .float-2 { animation: float 10s ease-in-out infinite; animation-delay: -2s; }
+        .float-3 { animation: float 12s ease-in-out infinite; animation-delay: -4s; }
+        
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Button Glow */
+        .btn-glow {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 50px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        /* Card Hover */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Pulse Ring */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .pulse-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(99, 102, 241, 0.5);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+    </style>
+    <% if (typeof themeCSS !== 'undefined' && themeCSS) { %>
+    <style><%- themeCSS %></style>
+    <% } %>
+</head>
+<body class="bg-grid text-white">
+
+    <!-- Floating Shapes Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 left-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl float-1"></div>
+        <div class="absolute top-40 right-20 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl float-2"></div>
+        <div class="absolute bottom-20 left-1/3 w-80 h-80 bg-pink-500/5 rounded-full blur-3xl float-3"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3">
+                <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+                <img src="<%= siteLogo %>" alt="<%= sitename %>" class="h-10 w-auto">
+                <% } else { %>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <i class="fa-solid fa-cube text-white"></i>
+                </div>
+                <% } %>
+                <span class="text-xl font-bold text-white"><%= sitename %></span>
+            </a>
+            
+            <% if(user) { %>
+            <div class="flex items-center gap-3">
+                <a href="/dashboard" class="hidden sm:flex items-center gap-2 text-gray-400 hover:text-white transition px-4 py-2 rounded-lg hover:bg-white/5">
+                    <i class="fa-solid fa-gauge"></i>
+                    <span>Dashboard</span>
+                </a>
+                <div class="flex items-center gap-3 glass px-3 py-2 rounded-full">
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" 
+                         class="w-8 h-8 rounded-full"
+                         onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                    <span class="text-sm font-medium hidden sm:block"><%= user.username %></span>
+                </div>
+            </div>
+            <% } else { %>
+            <a href="/login" class="flex items-center gap-2 bg-white/10 hover:bg-white/15 px-5 py-2.5 rounded-full font-medium transition text-sm">
+                <i class="fa-brands fa-discord"></i>
+                <span>Login</span>
+            </a>
+            <% } %>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="relative min-h-screen flex items-center justify-center px-6 pt-20">
+        <div class="max-w-4xl mx-auto text-center">
+            
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-sm text-gray-300 mb-8">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                All systems operational
+            </div>
+
+            <!-- Main Heading -->
+            <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 leading-tight">
+                Host Your
+                <span class="gradient-text"> Node.js </span>
+                <br class="hidden sm:block">
+                Apps Easily
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-gray-400 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                Deploy Discord bots and web applications in seconds. 
+                Simple, fast, and reliable hosting.
+            </p>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+                <% if(user) { %>
+                <a href="/dashboard" class="btn-glow bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-rocket"></i>
+                    Go to Dashboard
+                </a>
+                <a href="/logout" class="glass hover:bg-white/10 px-8 py-4 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 transition">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+                <% } else { %>
+                <a href="/login" class="btn-glow bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3">
+                    <i class="fa-brands fa-discord text-xl"></i>
+                    Get Started
+                </a>
+                <a href="#features" class="glass hover:bg-white/10 px-8 py-4 rounded-2xl font-medium text-lg flex items-center justify-center gap-3 transition">
+                    Learn More
+                    <i class="fa-solid fa-arrow-down"></i>
+                </a>
+                <% } %>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-4 sm:gap-6 max-w-lg mx-auto">
+                <div class="glass rounded-2xl p-4 sm:p-6 card-hover">
+                    <div class="text-2xl sm:text-3xl font-bold text-white"><%= stats.users %></div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Users</div>
+                </div>
+                <div class="glass rounded-2xl p-4 sm:p-6 card-hover">
+                    <div class="text-2xl sm:text-3xl font-bold text-white"><%= stats.servers %></div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Servers</div>
+                </div>
+                <div class="glass rounded-2xl p-4 sm:p-6 card-hover">
+                    <div class="text-2xl sm:text-3xl font-bold text-green-400">99.9%</div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wider mt-1">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Features Section -->
+    <section id="features" class="relative py-24 px-6">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Why Choose Us?</h2>
+                <p class="text-gray-400">Everything you need to run your applications</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
+                        <i class="fa-solid fa-bolt text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Instant Deploy</h3>
+                    <p class="text-gray-400 text-sm">Your server is ready in seconds. No waiting.</p>
+                </div>
+
+                <div class="glass rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4">
+                        <i class="fa-solid fa-terminal text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Live Console</h3>
+                    <p class="text-gray-400 text-sm">Real-time logs and debugging tools.</p>
+                </div>
+
+                <div class="glass rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4">
+                        <i class="fa-solid fa-folder-open text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">File Manager</h3>
+                    <p class="text-gray-400 text-sm">Edit and manage files directly in browser.</p>
+                </div>
+
+                <div class="glass rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-4">
+                        <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Auto Backups</h3>
+                    <p class="text-gray-400 text-sm">Your data is always safe and recoverable.</p>
+                </div>
+
+                <div class="glass rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4">
+                        <i class="fa-solid fa-gauge-high text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Resource Monitor</h3>
+                    <p class="text-gray-400 text-sm">Track CPU, RAM usage in real-time.</p>
+                </div>
+
+                <div class="glass rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 mb-4">
+                        <i class="fa-solid fa-shield text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">DDoS Protection</h3>
+                    <p class="text-gray-400 text-sm">Enterprise-grade security included.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-8 px-6 border-t border-white/5">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+                <img src="<%= siteLogo %>" alt="<%= sitename %>" class="h-6 w-auto opacity-50">
+                <% } %>
+                <span class="text-gray-500 text-sm">&copy; 2026 <%= sitename %></span>
+            </div>
+            
+            <div class="flex items-center gap-6 text-sm text-gray-500">
+                <a href="/terms" class="hover:text-white transition">Terms</a>
+                <a href="/privacy" class="hover:text-white transition">Privacy</a>
+                <a href="https://discord.gg/bV86tv4PPA" class="hover:text-indigo-400 transition flex items-center gap-2">
+                    <i class="fa-brands fa-discord"></i>
+                    Discord
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <% if (typeof pluginScripts !== 'undefined' && pluginScripts) { %>
+    <%- pluginScripts %>
+    <% } %>
+</body>
+</html>
+

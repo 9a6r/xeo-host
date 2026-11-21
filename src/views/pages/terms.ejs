@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth">
+<head>
+    <title>Terms of Service | <%= sitename %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+    <link rel="icon" type="image/png" href="<%= siteLogo %>">
+    <link rel="apple-touch-icon" href="<%= siteLogo %>">
+    <% } %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #020617; color: white; font-family: 'Segoe UI', sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    </style>
+    <%# Theme CSS %>
+    <% if (typeof themeCSS !== 'undefined' && themeCSS) { %>
+    <style id="theme-css"><%- themeCSS %></style>
+    <% } %>
+</head>
+<body class="bg-black min-h-screen">
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 p-6 backdrop-blur-md border-b border-white/5 bg-black/50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3">
+                <i class="fa-solid fa-layer-group text-2xl text-indigo-500"></i>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"><%= sitename %></h1>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="/" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Back
+                </a>
+                <% if(user) { %>
+                    <a href="/dashboard" class="bg-white/10 hover:bg-white/20 border border-white/10 px-6 py-2 rounded-full font-bold transition">Dashboard</a>
+                <% } else { %>
+                    <a href="/auth/discord" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-full font-bold transition">Login</a>
+                <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="pt-32 pb-20 px-4">
+        <div class="container mx-auto max-w-4xl">
+            <div class="glass-card rounded-3xl p-8 md:p-12">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-file-contract text-2xl text-purple-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl md:text-4xl font-bold">Terms of Service</h1>
+                        <p class="text-gray-400 text-sm">Last updated: January 2026</p>
+                    </div>
+                </div>
+
+                <div class="space-y-8 text-gray-300 leading-relaxed">
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-handshake text-indigo-400"></i>
+                            Acceptance of Terms
+                        </h2>
+                        <p>By accessing and using <%= sitename %>, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-server text-purple-400"></i>
+                            Service Description
+                        </h2>
+                        <p><%= sitename %> provides hosting services for Node.js applications, including but not limited to Discord bots. Our services include:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>Server creation and management</li>
+                            <li>File management and editing</li>
+                            <li>Real-time console access</li>
+                            <li>Backup and restore functionality</li>
+                            <li>Resource monitoring</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-user-check text-green-400"></i>
+                            User Responsibilities
+                        </h2>
+                        <p>As a user of our services, you agree to:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>Provide accurate information when creating your account</li>
+                            <li>Maintain the security of your account credentials</li>
+                            <li>Use our services in compliance with all applicable laws</li>
+                            <li>Not engage in any activity that disrupts or interferes with our services</li>
+                            <li>Not use our services for any illegal or unauthorized purpose</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-ban text-red-400"></i>
+                            Prohibited Activities
+                        </h2>
+                        <p>The following activities are strictly prohibited:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li><strong class="text-white">Malicious Software:</strong> Hosting malware, viruses, or any harmful code</li>
+                            <li><strong class="text-white">DDoS/DoS Attacks:</strong> Launching or participating in denial of service attacks</li>
+                            <li><strong class="text-white">Spam:</strong> Mass messaging, spam bots, or unsolicited communications</li>
+                            <li><strong class="text-white">Illegal Content:</strong> Hosting content that violates any laws</li>
+                            <li><strong class="text-white">Resource Abuse:</strong> Cryptocurrency mining or excessive resource consumption</li>
+                            <li><strong class="text-white">Terms Violation:</strong> Violating Discord's Terms of Service</li>
+                            <li><strong class="text-white">Account Sharing:</strong> Sharing or selling your account</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-yellow-400"></i>
+                            Coins & Payments
+                        </h2>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>Coins are the virtual currency used on our platform</li>
+                            <li>Coins are non-refundable and non-transferable</li>
+                            <li>Coins have no real-world monetary value</li>
+                            <li>We reserve the right to modify coin prices at any time</li>
+                            <li>Abuse of free coin systems may result in account termination</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-gavel text-cyan-400"></i>
+                            Termination
+                        </h2>
+                        <p>We reserve the right to suspend or terminate your account at any time for:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>Violation of these Terms of Service</li>
+                            <li>Engaging in prohibited activities</li>
+                            <li>Abuse of our services or support</li>
+                            <li>Non-payment or fraudulent transactions</li>
+                        </ul>
+                        <p class="mt-4 text-yellow-400/80"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Upon termination, all data associated with your account may be permanently deleted.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-indigo-400"></i>
+                            Limitation of Liability
+                        </h2>
+                        <p><%= sitename %> is provided "as is" without warranties of any kind. We are not liable for:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>Data loss or corruption</li>
+                            <li>Service interruptions or downtime</li>
+                            <li>Any damages resulting from the use of our services</li>
+                            <li>Third-party actions or content</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-rotate text-purple-400"></i>
+                            Changes to Terms
+                        </h2>
+                        <p>We may update these Terms of Service at any time. Continued use of our services after changes constitutes acceptance of the new terms. We recommend reviewing this page periodically.</p>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-envelope text-green-400"></i>
+                            Contact
+                        </h2>
+                        <p>For questions about these Terms of Service, please contact us:</p>
+                        <div class="mt-4 flex flex-wrap gap-4">
+                            <a href="https://discord.gg/bV86tv4PPA" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600/20 text-indigo-400 rounded-lg hover:bg-indigo-600/30 transition">
+                                <i class="fa-brands fa-discord"></i> Discord Support
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center border-t border-white/5 text-gray-600 bg-black">
+        <p class="mb-2">&copy; 2026 <%= sitename %></p>
+        <div class="flex justify-center gap-6 text-sm mt-4">
+            <a href="/terms" class="text-indigo-400">Terms of Service</a>
+            <a href="/privacy" class="hover:text-white transition">Privacy Policy</a>
+            <a href="/contact" class="hover:text-white transition">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

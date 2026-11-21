@@ -1,0 +1,32 @@
+<footer class="mt-10 text-center text-xs text-gray-500 border-t border-white/10 pt-6 pb-4">
+  <!-- Links -->
+  <div class="flex flex-wrap justify-center gap-4 mb-4">
+    <a href="/terms" class="hover:text-white transition">Terms of Service</a>
+    <a href="/privacy" class="hover:text-white transition">Privacy Policy</a>
+    <a href="/contact" class="hover:text-white transition">Contact</a>
+    <a href="https://discord.gg/bV86tv4PPA" target="_blank" class="hover:text-indigo-400 transition flex items-center gap-1">
+      <i class="fa-brands fa-discord"></i> Support
+    </a>
+  </div>
+
+  <!-- Copyright -->
+  <div>
+    © <%= new Date().getFullYear() %> All Rights Reserved
+  </div>
+
+  <div class="mt-2 flex items-center justify-center gap-2 text-gray-400">
+    <span>By</span>
+    <a 
+      href="https://discord.gg/8QRmF2Ae2m"
+      target="_blank"
+      class="text-indigo-400 font-bold hover:text-indigo-300 transition flex items-center gap-1"
+    >
+      Xeo Studio
+      <i class="fa-brands fa-discord text-sm"></i>
+    </a>
+  </div>
+</footer>
+<%# Plugin Scripts - يتم حقنها تلقائياً %>
+<% if (typeof pluginScripts !== 'undefined' && pluginScripts) { %>
+<%- pluginScripts %>
+<% } %>

@@ -1,0 +1,327 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h2 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
+                <i class="fa-solid fa-bullhorn mr-3"></i>Announcements
+            </h2>
+            <p class="text-gray-400 mt-2">Create and manage announcements for your users</p>
+        </div>
+        <button onclick="document.getElementById('createModal').classList.remove('hidden')" 
+            class="mt-4 md:mt-0 bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> New Announcement
+        </button>
+    </div>
+
+    <% if (message) { %>
+    <div class="mb-6 p-4 rounded-xl <%= message.type === 'success' ? 'bg-green-500/20 border border-green-500/30 text-green-400' : 'bg-red-500/20 border border-red-500/30 text-red-400' %>">
+        <i class="fa-solid <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
+        <%= message.text %>
+    </div>
+    <% } %>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass p-4 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-bullhorn text-yellow-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-sm">Total</p>
+                    <p class="text-2xl font-bold text-white"><%= announcements.length %></p>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-check text-green-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-sm">Active</p>
+                    <p class="text-2xl font-bold text-white"><%= announcements.filter(a => a.is_active).length %></p>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-bell-slash text-red-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-sm">Inactive</p>
+                    <p class="text-2xl font-bold text-white"><%= announcements.filter(a => !a.is_active).length %></p>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-2xl border border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-star text-purple-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-sm">High Priority</p>
+                    <p class="text-2xl font-bold text-white"><%= announcements.filter(a => a.priority > 0).length %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcements List -->
+    <div class="glass rounded-3xl border border-white/5 overflow-hidden">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white">All Announcements</h3>
+        </div>
+        
+        <% if (announcements.length === 0) { %>
+        <div class="p-12 text-center">
+            <i class="fa-solid fa-bullhorn text-6xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400 text-lg">No announcements yet</p>
+            <p class="text-gray-500 text-sm mt-2">Create your first announcement to notify users</p>
+        </div>
+        <% } else { %>
+        <div class="divide-y divide-white/5">
+            <% announcements.forEach(announcement => { %>
+            <div class="p-6 hover:bg-white/5 transition">
+                <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2 flex-wrap">
+                            <% if (announcement.priority > 0) { %>
+                            <span class="text-yellow-400"><i class="fa-solid fa-star"></i></span>
+                            <% } %>
+                            <span class="font-bold text-white text-lg"><%= announcement.title %></span>
+                            
+                            <!-- Type Badge -->
+                            <% if (announcement.type === 'info') { %>
+                            <span class="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-info-circle mr-1"></i>Info
+                            </span>
+                            <% } else if (announcement.type === 'warning') { %>
+                            <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-exclamation-triangle mr-1"></i>Warning
+                            </span>
+                            <% } else if (announcement.type === 'success') { %>
+                            <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-check-circle mr-1"></i>Success
+                            </span>
+                            <% } else if (announcement.type === 'error') { %>
+                            <span class="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-times-circle mr-1"></i>Error
+                            </span>
+                            <% } else if (announcement.type === 'update') { %>
+                            <span class="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-rocket mr-1"></i>Update
+                            </span>
+                            <% } %>
+                            
+                            <!-- Status Badge -->
+                            <% if (announcement.is_active) { %>
+                            <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">Active</span>
+                            <% } else { %>
+                            <span class="text-xs bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full">Inactive</span>
+                            <% } %>
+                            
+                            <!-- Target Badge -->
+                            <span class="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full">
+                                <i class="fa-solid fa-users mr-1"></i><%= announcement.target === 'all' ? 'Everyone' : announcement.target %>
+                            </span>
+                        </div>
+                        
+                        <p class="text-gray-400 mb-3 line-clamp-2"><%= announcement.content %></p>
+                        
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                            <span><i class="fa-solid fa-user mr-1"></i><%= announcement.author || 'Unknown' %></span>
+                            <span><i class="fa-solid fa-clock mr-1"></i><%= new Date(announcement.created_at).toLocaleDateString() %></span>
+                            <% if (announcement.expires_at) { %>
+                            <span><i class="fa-solid fa-hourglass-end mr-1"></i>Expires: <%= new Date(announcement.expires_at).toLocaleDateString() %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="editAnnouncement(<%= JSON.stringify(announcement).replace(/"/g, '&quot;') %>)" 
+                            class="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-xl transition">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <form action="/admin/announcements/toggle/<%= announcement.id %>" method="POST" class="inline">
+                            <button type="submit" class="<%= announcement.is_active ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30' : 'bg-green-500/20 text-green-400 hover:bg-green-500/30' %> px-4 py-2 rounded-xl transition">
+                                <i class="fa-solid <%= announcement.is_active ? 'fa-pause' : 'fa-play' %>"></i>
+                            </button>
+                        </form>
+                        <form action="/admin/announcements/delete/<%= announcement.id %>" method="POST" class="inline" onsubmit="return confirm('Delete this announcement?')">
+                            <button type="submit" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0a0a1a] rounded-3xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center sticky top-0 bg-[#0a0a1a]">
+            <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-bullhorn mr-2"></i>New Announcement</h3>
+            <button onclick="document.getElementById('createModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        <form action="/admin/announcements/create" method="POST" class="p-6 space-y-6">
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Title *</label>
+                <input type="text" name="title" required placeholder="Announcement title" 
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+            </div>
+            
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Content *</label>
+                <textarea name="content" required rows="4" placeholder="Write your announcement message here..."
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500 resize-none"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Type</label>
+                    <select name="type" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                        <option value="info">ℹ️ Info</option>
+                        <option value="success">✅ Success</option>
+                        <option value="warning">⚠️ Warning</option>
+                        <option value="error">❌ Error</option>
+                        <option value="update">🚀 Update</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Target Audience</label>
+                    <select name="target" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                        <option value="all">Everyone</option>
+                        <option value="users">Users Only</option>
+                        <option value="admins">Admins Only</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Priority</label>
+                    <select name="priority" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                        <option value="0">Normal</option>
+                        <option value="1">High (Pinned)</option>
+                        <option value="2">Urgent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Expires At (Optional)</label>
+                    <input type="datetime-local" name="expires_at" 
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 py-3 rounded-xl font-bold hover:opacity-90 transition">
+                <i class="fa-solid fa-paper-plane mr-2"></i>Publish Announcement
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0a0a1a] rounded-3xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center sticky top-0 bg-[#0a0a1a]">
+            <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-edit mr-2"></i>Edit Announcement</h3>
+            <button onclick="document.getElementById('editModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        <form id="editForm" method="POST" class="p-6 space-y-6">
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Title *</label>
+                <input type="text" name="title" id="edit_title" required placeholder="Announcement title" 
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+            </div>
+            
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Content *</label>
+                <textarea name="content" id="edit_content" required rows="4" placeholder="Write your announcement message here..."
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500 resize-none"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Type</label>
+                    <select name="type" id="edit_type" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                        <option value="info">ℹ️ Info</option>
+                        <option value="success">✅ Success</option>
+                        <option value="warning">⚠️ Warning</option>
+                        <option value="error">❌ Error</option>
+                        <option value="update">🚀 Update</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Target Audience</label>
+                    <select name="target" id="edit_target" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                        <option value="all">Everyone</option>
+                        <option value="users">Users Only</option>
+                        <option value="admins">Admins Only</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Priority</label>
+                    <select name="priority" id="edit_priority" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                        <option value="0">Normal</option>
+                        <option value="1">High (Pinned)</option>
+                        <option value="2">Urgent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-2">Expires At (Optional)</label>
+                    <input type="datetime-local" name="expires_at" id="edit_expires_at"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="is_active" id="edit_is_active" class="rounded bg-white/10 border-white/20 text-yellow-500 focus:ring-yellow-500 w-5 h-5">
+                    <span class="text-white">Active</span>
+                </label>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 py-3 rounded-xl font-bold hover:opacity-90 transition">
+                <i class="fa-solid fa-save mr-2"></i>Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function editAnnouncement(announcement) {
+    document.getElementById('editForm').action = '/admin/announcements/edit/' + announcement.id;
+    document.getElementById('edit_title').value = announcement.title;
+    document.getElementById('edit_content').value = announcement.content;
+    document.getElementById('edit_type').value = announcement.type;
+    document.getElementById('edit_target').value = announcement.target;
+    document.getElementById('edit_priority').value = announcement.priority;
+    document.getElementById('edit_is_active').checked = announcement.is_active == 1;
+    
+    if (announcement.expires_at) {
+        const date = new Date(announcement.expires_at);
+        document.getElementById('edit_expires_at').value = date.toISOString().slice(0, 16);
+    } else {
+        document.getElementById('edit_expires_at').value = '';
+    }
+    
+    document.getElementById('editModal').classList.remove('hidden');
+}
+</script>
+
+<%- include('./partials/footer') %>

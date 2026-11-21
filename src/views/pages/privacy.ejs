@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth">
+<head>
+    <title>Privacy Policy | <%= sitename %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+    <link rel="icon" type="image/png" href="<%= siteLogo %>">
+    <link rel="apple-touch-icon" href="<%= siteLogo %>">
+    <% } %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #020617; color: white; font-family: 'Segoe UI', sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    </style>
+    <%# Theme CSS %>
+    <% if (typeof themeCSS !== 'undefined' && themeCSS) { %>
+    <style id="theme-css"><%- themeCSS %></style>
+    <% } %>
+</head>
+<body class="bg-black min-h-screen">
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 p-6 backdrop-blur-md border-b border-white/5 bg-black/50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3">
+                <i class="fa-solid fa-layer-group text-2xl text-indigo-500"></i>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400"><%= sitename %></h1>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="/" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Back
+                </a>
+                <% if(user) { %>
+                    <a href="/dashboard" class="bg-white/10 hover:bg-white/20 border border-white/10 px-6 py-2 rounded-full font-bold transition">Dashboard</a>
+                <% } else { %>
+                    <a href="/auth/discord" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-full font-bold transition">Login</a>
+                <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="pt-32 pb-20 px-4">
+        <div class="container mx-auto max-w-4xl">
+            <div class="glass-card rounded-3xl p-8 md:p-12">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-shield-halved text-2xl text-indigo-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl md:text-4xl font-bold">Privacy Policy</h1>
+                        <p class="text-gray-400 text-sm">Last updated: January 2026</p>
+                    </div>
+                </div>
+
+                <div class="space-y-8 text-gray-300 leading-relaxed">
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-database text-indigo-400"></i>
+                            Information We Collect
+                        </h2>
+                        <p class="mb-4">When you use <%= sitename %>, we collect the following information:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li><strong class="text-white">Discord Account Information:</strong> Your Discord ID, username, and avatar when you log in via Discord OAuth.</li>
+                            <li><strong class="text-white">Server Data:</strong> Files, configurations, and logs associated with your hosted applications.</li>
+                            <li><strong class="text-white">Usage Data:</strong> Information about how you interact with our services, including access times and features used.</li>
+                            <li><strong class="text-white">Payment Information:</strong> Transaction records for coin purchases (processed securely through third-party providers).</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-gears text-purple-400"></i>
+                            How We Use Your Information
+                        </h2>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>To provide and maintain our hosting services</li>
+                            <li>To authenticate your identity and manage your account</li>
+                            <li>To process transactions and manage your coin balance</li>
+                            <li>To communicate with you about service updates and support</li>
+                            <li>To improve our services and develop new features</li>
+                            <li>To detect and prevent fraud or abuse</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-lock text-green-400"></i>
+                            Data Security
+                        </h2>
+                        <p>We implement industry-standard security measures to protect your data:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>Encrypted data transmission (HTTPS/TLS)</li>
+                            <li>Isolated container environments for each server</li>
+                            <li>Regular security audits and updates</li>
+                            <li>Secure authentication via Discord OAuth 2.0</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-share-nodes text-cyan-400"></i>
+                            Data Sharing
+                        </h2>
+                        <p>We do not sell your personal information. We may share data only in the following circumstances:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>With your consent</li>
+                            <li>To comply with legal obligations</li>
+                            <li>To protect our rights and prevent abuse</li>
+                            <li>With service providers who assist in operating our platform</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-user-gear text-yellow-400"></i>
+                            Your Rights
+                        </h2>
+                        <p>You have the right to:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4 mt-4">
+                            <li>Access your personal data</li>
+                            <li>Request deletion of your account and data</li>
+                            <li>Export your server files and configurations</li>
+                            <li>Opt out of non-essential communications</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-envelope text-red-400"></i>
+                            Contact Us
+                        </h2>
+                        <p>If you have any questions about this Privacy Policy, please contact us:</p>
+                        <div class="mt-4 flex flex-wrap gap-4">
+                            <a href="https://discord.gg/bV86tv4PPA" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600/20 text-indigo-400 rounded-lg hover:bg-indigo-600/30 transition">
+                                <i class="fa-brands fa-discord"></i> Discord Support
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center border-t border-white/5 text-gray-600 bg-black">
+        <p class="mb-2">&copy; 2026 <%= sitename %></p>
+        <div class="flex justify-center gap-6 text-sm mt-4">
+            <a href="/terms" class="hover:text-white transition">Terms of Service</a>
+            <a href="/privacy" class="text-indigo-400">Privacy Policy</a>
+            <a href="/contact" class="hover:text-white transition">Contact</a>
+        </div>
+    </footer>
+</body>
+</html>

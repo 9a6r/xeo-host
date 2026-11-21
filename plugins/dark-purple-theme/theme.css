@@ -1,0 +1,103 @@
+/* Dark Purple Theme for XeoStudio */
+
+:root {
+    --primary: #7c3aed;
+    --primary-light: #a855f7;
+    --accent: #c084fc;
+    --bg-dark: #0a0a0f;
+    --bg-card: rgba(124, 58, 237, 0.05);
+    --border-color: rgba(124, 58, 237, 0.2);
+}
+
+body {
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 100%) !important;
+}
+
+/* Glass effect with purple tint */
+.glass {
+    background: rgba(124, 58, 237, 0.08) !important;
+    border: 1px solid rgba(124, 58, 237, 0.15) !important;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.1);
+}
+
+/* Sidebar */
+aside {
+    background: linear-gradient(180deg, rgba(124, 58, 237, 0.1) 0%, rgba(10, 10, 15, 0.95) 100%) !important;
+    border-right-color: rgba(124, 58, 237, 0.2) !important;
+}
+
+/* Buttons */
+.bg-indigo-600 {
+    background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+}
+
+.bg-indigo-600:hover {
+    background: linear-gradient(135deg, #8b5cf6, #c084fc) !important;
+}
+
+/* Links and accents */
+.text-indigo-400, .text-indigo-500 {
+    color: #a855f7 !important;
+}
+
+.from-indigo-400 {
+    --tw-gradient-from: #7c3aed !important;
+}
+
+.to-cyan-400, .to-purple-500 {
+    --tw-gradient-to: #c084fc !important;
+}
+
+/* Cards hover effect */
+.glass:hover {
+    border-color: rgba(168, 85, 247, 0.3) !important;
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.2);
+}
+
+/* Input fields */
+input, textarea, select {
+    background: rgba(124, 58, 237, 0.1) !important;
+    border-color: rgba(124, 58, 237, 0.2) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(124, 58, 237, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #7c3aed, #a855f7);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #8b5cf6, #c084fc);
+}
+
+/* Status badges */
+.bg-green-500\/20 {
+    background: rgba(34, 197, 94, 0.2) !important;
+}
+
+.bg-red-500\/20 {
+    background: rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Animations */
+@keyframes purple-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.5); }
+}
+
+.glass:hover {
+    animation: purple-glow 2s ease-in-out infinite;
+}

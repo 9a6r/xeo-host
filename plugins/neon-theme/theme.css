@@ -1,0 +1,173 @@
+/* Neon Cyberpunk Theme for XeoStudio */
+
+:root {
+    --neon-cyan: #00f5ff;
+    --neon-pink: #ff00ff;
+    --neon-green: #00ff88;
+    --bg-dark: #0a0a12;
+}
+
+body {
+    background: #0a0a12 !important;
+    background-image: 
+        linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px) !important;
+    background-size: 50px 50px !important;
+}
+
+/* Glass effect with neon glow */
+.glass {
+    background: rgba(10, 10, 18, 0.9) !important;
+    border: 1px solid rgba(0, 245, 255, 0.2) !important;
+    box-shadow: 
+        0 0 20px rgba(0, 245, 255, 0.1),
+        inset 0 0 20px rgba(0, 245, 255, 0.02);
+}
+
+.glass:hover {
+    border-color: rgba(0, 245, 255, 0.5) !important;
+    box-shadow: 
+        0 0 30px rgba(0, 245, 255, 0.2),
+        0 0 60px rgba(255, 0, 255, 0.1);
+}
+
+/* Sidebar with neon border */
+aside {
+    background: linear-gradient(180deg, rgba(0, 245, 255, 0.05) 0%, rgba(10, 10, 18, 0.98) 100%) !important;
+    border-right: 1px solid rgba(0, 245, 255, 0.3) !important;
+    box-shadow: 2px 0 20px rgba(0, 245, 255, 0.1);
+}
+
+/* Neon buttons */
+.bg-indigo-600 {
+    background: linear-gradient(135deg, #00f5ff, #ff00ff) !important;
+    box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.bg-indigo-600:hover {
+    box-shadow: 
+        0 0 30px rgba(0, 245, 255, 0.6),
+        0 0 60px rgba(255, 0, 255, 0.4);
+}
+
+/* Neon text */
+.text-indigo-400, .text-indigo-500 {
+    color: #00f5ff !important;
+    text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.from-indigo-400 {
+    --tw-gradient-from: #00f5ff !important;
+}
+
+.to-cyan-400, .to-purple-500 {
+    --tw-gradient-to: #ff00ff !important;
+}
+
+/* Headings with neon glow */
+h1, h2, h3 {
+    text-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+}
+
+/* Input fields with neon border */
+input, textarea, select {
+    background: rgba(0, 245, 255, 0.05) !important;
+    border: 1px solid rgba(0, 245, 255, 0.2) !important;
+    color: #fff !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: #00f5ff !important;
+    box-shadow: 
+        0 0 10px rgba(0, 245, 255, 0.3),
+        inset 0 0 10px rgba(0, 245, 255, 0.1);
+}
+
+/* Neon scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 245, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00f5ff, #ff00ff);
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+/* Status indicators */
+.bg-green-500\/20 {
+    background: rgba(0, 255, 136, 0.2) !important;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+.text-green-400 {
+    color: #00ff88 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.bg-red-500\/20 {
+    background: rgba(255, 0, 100, 0.2) !important;
+    box-shadow: 0 0 10px rgba(255, 0, 100, 0.2);
+}
+
+.text-red-400 {
+    color: #ff0064 !important;
+    text-shadow: 0 0 10px rgba(255, 0, 100, 0.5);
+}
+
+/* Neon animations */
+@keyframes neon-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+    }
+    50% { 
+        box-shadow: 
+            0 0 30px rgba(0, 245, 255, 0.5),
+            0 0 60px rgba(255, 0, 255, 0.3);
+    }
+}
+
+@keyframes neon-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+        text-shadow: 
+            0 0 10px rgba(0, 245, 255, 0.5),
+            0 0 20px rgba(0, 245, 255, 0.3);
+    }
+    20%, 24%, 55% {
+        text-shadow: none;
+    }
+}
+
+/* Apply animations */
+.glass {
+    transition: all 0.3s ease;
+}
+
+h1 {
+    animation: neon-flicker 3s infinite;
+}
+
+/* Scanline effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1) 0px,
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    z-index: 9999;
+    opacity: 0.3;
+}

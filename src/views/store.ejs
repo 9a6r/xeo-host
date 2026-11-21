@@ -1,0 +1,195 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+        <i class="fa-solid fa-store mr-3"></i>Resource Store
+    </h2>
+    <p class="text-gray-400 mb-8">Purchase resources to upgrade your servers</p>
+
+    <!-- User Balance & Resources -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass p-4 rounded-xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-yellow-600/20 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-coins text-yellow-400 text-xl"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-yellow-400"><%= user.coins %></div>
+                <div class="text-xs text-gray-400">Your Coins</div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-memory text-blue-400 text-xl"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white"><%= Math.max(0, resources.ram) %> MB</div>
+                <div class="text-xs text-gray-400">Available RAM</div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-microchip text-purple-400 text-xl"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white"><%= Math.max(0, resources.cpu) %>%</div>
+                <div class="text-xs text-gray-400">Available CPU</div>
+            </div>
+        </div>
+        <div class="glass p-4 rounded-xl flex items-center gap-4">
+            <div class="w-12 h-12 bg-green-600/20 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-hard-drive text-green-400 text-xl"></i>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white"><%= Math.max(0, resources.disk) %> MB</div>
+                <div class="text-xs text-gray-400">Available Disk</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    <% if(typeof message !== 'undefined' && message) { %>
+    <div class="mb-6 p-4 rounded-xl <%= message.type === 'success' ? 'bg-green-500/20 border border-green-500/30 text-green-400' : 'bg-red-500/20 border border-red-500/30 text-red-400' %>">
+        <i class="fa-solid <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
+        <%= message.text %>
+    </div>
+    <% } %>
+
+    <!-- Store Items -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- RAM -->
+        <div class="glass p-6 rounded-2xl border border-white/5 hover:border-blue-500/30 transition">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-memory text-3xl text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">RAM</h3>
+                    <p class="text-sm text-gray-400">Memory for your servers</p>
+                </div>
+            </div>
+            
+            <form action="/store/buy" method="POST" class="space-y-4">
+                <input type="hidden" name="type" value="ram">
+                <div>
+                    <label class="text-xs text-gray-400 font-bold mb-2 block">Amount (MB)</label>
+                    <select name="amount" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition" onchange="updatePrice(this, <%= prices.ram %>)">
+                        <option value="256">256 MB</option>
+                        <option value="512" selected>512 MB</option>
+                        <option value="1024">1024 MB (1 GB)</option>
+                        <option value="2048">2048 MB (2 GB)</option>
+                        <option value="4096">4096 MB (4 GB)</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                    <span class="text-gray-400">Price:</span>
+                    <span class="text-yellow-400 font-bold price-display"><%= prices.ram * 512 %> Coins</span>
+                </div>
+                <button class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cart-plus"></i>
+                    Purchase RAM
+                </button>
+            </form>
+        </div>
+
+        <!-- CPU -->
+        <div class="glass p-6 rounded-2xl border border-white/5 hover:border-purple-500/30 transition">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-microchip text-3xl text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">CPU</h3>
+                    <p class="text-sm text-gray-400">Processing power</p>
+                </div>
+            </div>
+            
+            <form action="/store/buy" method="POST" class="space-y-4">
+                <input type="hidden" name="type" value="cpu">
+                <div>
+                    <label class="text-xs text-gray-400 font-bold mb-2 block">Amount (%)</label>
+                    <select name="amount" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-purple-500 transition" onchange="updatePrice(this, <%= prices.cpu %>)">
+                        <option value="25">25%</option>
+                        <option value="50" selected>50%</option>
+                        <option value="100">100%</option>
+                        <option value="200">200%</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                    <span class="text-gray-400">Price:</span>
+                    <span class="text-yellow-400 font-bold price-display"><%= prices.cpu * 50 %> Coins</span>
+                </div>
+                <button class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cart-plus"></i>
+                    Purchase CPU
+                </button>
+            </form>
+        </div>
+
+        <!-- Disk -->
+        <div class="glass p-6 rounded-2xl border border-white/5 hover:border-green-500/30 transition">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <i class="fa-solid fa-hard-drive text-3xl text-white"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Disk</h3>
+                    <p class="text-sm text-gray-400">Storage space</p>
+                </div>
+            </div>
+            
+            <form action="/store/buy" method="POST" class="space-y-4">
+                <input type="hidden" name="type" value="disk">
+                <div>
+                    <label class="text-xs text-gray-400 font-bold mb-2 block">Amount (MB)</label>
+                    <select name="amount" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-green-500 transition" onchange="updatePrice(this, <%= prices.disk %>)">
+                        <option value="512">512 MB</option>
+                        <option value="1024" selected>1024 MB (1 GB)</option>
+                        <option value="2048">2048 MB (2 GB)</option>
+                        <option value="5120">5120 MB (5 GB)</option>
+                        <option value="10240">10240 MB (10 GB)</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                    <span class="text-gray-400">Price:</span>
+                    <span class="text-yellow-400 font-bold price-display"><%= prices.disk * 1024 %> Coins</span>
+                </div>
+                <button class="w-full bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cart-plus"></i>
+                    Purchase Disk
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pricing Info -->
+    <div class="mt-8 glass p-6 rounded-2xl border border-white/5">
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-tags text-yellow-400"></i>
+            Pricing
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <span class="text-gray-400"><i class="fa-solid fa-memory text-blue-400 mr-2"></i>RAM</span>
+                <span class="text-white font-bold"><%= prices.ram %> coins / MB</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <span class="text-gray-400"><i class="fa-solid fa-microchip text-purple-400 mr-2"></i>CPU</span>
+                <span class="text-white font-bold"><%= prices.cpu %> coins / %</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <span class="text-gray-400"><i class="fa-solid fa-hard-drive text-green-400 mr-2"></i>Disk</span>
+                <span class="text-white font-bold"><%= prices.disk %> coins / MB</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updatePrice(select, pricePerUnit) {
+    const amount = parseInt(select.value);
+    const price = amount * pricePerUnit;
+    select.closest('form').querySelector('.price-display').textContent = price + ' Coins';
+}
+</script>
+
+<%- include('./partials/footer') %>

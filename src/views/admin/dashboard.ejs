@@ -1,0 +1,130 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-7xl mx-auto">
+    <h2 class="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+        <i class="fa-solid fa-chart-line mr-3"></i>Dashboard
+    </h2>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-gray-400 text-sm">Total Users</div>
+                    <div class="text-3xl font-bold text-white"><%= users.length %></div>
+                </div>
+                <div class="w-12 h-12 bg-indigo-600/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-users text-indigo-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-gray-400 text-sm">Total Servers</div>
+                    <div class="text-3xl font-bold text-white"><%= servers.length %></div>
+                </div>
+                <div class="w-12 h-12 bg-green-600/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-server text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-gray-400 text-sm">CPU Load</div>
+                    <div class="text-3xl font-bold text-white"><%= stats.load %></div>
+                </div>
+                <div class="w-12 h-12 bg-yellow-600/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-microchip text-yellow-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-gray-400 text-sm">Memory</div>
+                    <div class="text-3xl font-bold text-white"><%= stats.mem %></div>
+                </div>
+                <div class="w-12 h-12 bg-purple-600/20 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-memory text-purple-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Users -->
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-400 uppercase text-xs">Recent Users</h3>
+                <a href="/admin/users" class="text-indigo-400 text-xs hover:text-indigo-300">View All →</a>
+            </div>
+            <div class="space-y-3 max-h-80 overflow-y-auto custom-scroll">
+                <% users.slice(0, 5).forEach(u => { %>
+                <div class="bg-white/5 p-3 rounded-xl flex items-center gap-3">
+                    <img src="https://cdn.discordapp.com/avatars/<%= u.id %>/<%= u.avatar %>.png" class="w-10 h-10 rounded-full" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                    <div class="flex-1">
+                        <div class="font-bold text-sm text-white"><%= u.username %></div>
+                        <div class="text-[10px] text-yellow-500"><%= u.coins %> Coins</div>
+                    </div>
+                    <% if(u.isAdmin) { %>
+                    <span class="bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded text-[10px]">Admin</span>
+                    <% } %>
+                </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- Recent Servers -->
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-400 uppercase text-xs">Recent Servers</h3>
+                <a href="/admin/servers" class="text-indigo-400 text-xs hover:text-indigo-300">View All →</a>
+            </div>
+            <div class="space-y-3 max-h-80 overflow-y-auto custom-scroll">
+                <% servers.slice(0, 5).forEach(s => { %>
+                <div class="bg-white/5 p-3 rounded-xl flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-sm text-white flex items-center gap-2">
+                            <%= s.name %>
+                            <% if(s.isSuspended) { %>
+                            <span class="text-red-500 bg-red-500/10 px-2 rounded text-[10px]">SUSPENDED</span>
+                            <% } %>
+                        </div>
+                        <div class="text-[10px] text-gray-500">ID: <%= s.id %></div>
+                    </div>
+                    <a href="/server/<%= s.id %>" class="text-indigo-400 hover:text-indigo-300">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="glass p-6 rounded-2xl mt-8">
+        <h3 class="font-bold text-gray-400 uppercase text-xs mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="/admin/users" class="bg-white/5 hover:bg-white/10 p-4 rounded-xl text-center transition">
+                <i class="fa-solid fa-user-plus text-2xl text-indigo-400 mb-2"></i>
+                <div class="text-sm text-white">Manage Users</div>
+            </a>
+            <a href="/admin/servers" class="bg-white/5 hover:bg-white/10 p-4 rounded-xl text-center transition">
+                <i class="fa-solid fa-server text-2xl text-green-400 mb-2"></i>
+                <div class="text-sm text-white">Manage Servers</div>
+            </a>
+            <a href="/admin/backup" class="bg-white/5 hover:bg-white/10 p-4 rounded-xl text-center transition">
+                <i class="fa-solid fa-cloud-arrow-up text-2xl text-yellow-400 mb-2"></i>
+                <div class="text-sm text-white">Create Backup</div>
+            </a>
+            <a href="/admin/settings" class="bg-white/5 hover:bg-white/10 p-4 rounded-xl text-center transition">
+                <i class="fa-solid fa-gear text-2xl text-purple-400 mb-2"></i>
+                <div class="text-sm text-white">Settings</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<%- include('./partials/footer') %>

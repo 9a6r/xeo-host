@@ -1,0 +1,38 @@
+{
+    "id": "dark-purple-theme",
+    "name": "Dark Purple Theme",
+    "version": "1.0.0",
+    "description": "A beautiful dark purple theme with gradient accents",
+    "author": "XeoStudio",
+    "type": "theme",
+    "icon": "fa-solid fa-palette",
+    "css": "theme.css",
+    "primaryColor": "linear-gradient(135deg, #7c3aed, #a855f7)",
+    "configurable": true,
+    "config": [
+        {
+            "name": "primaryColor",
+            "label": "Primary Color",
+            "type": "color",
+            "default": "#7c3aed"
+        },
+        {
+            "name": "accentColor",
+            "label": "Accent Color",
+            "type": "color",
+            "default": "#a855f7"
+        },
+        {
+            "name": "borderRadius",
+            "label": "Border Radius",
+            "type": "select",
+            "default": "1.5rem",
+            "options": [
+                {"value": "0.5rem", "label": "Small"},
+                {"value": "1rem", "label": "Medium"},
+                {"value": "1.5rem", "label": "Large"},
+                {"value": "2rem", "label": "Extra Large"}
+            ]
+        }
+    ]
+}

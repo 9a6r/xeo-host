@@ -1,0 +1,180 @@
+<%- include('../partials/header') %>
+
+<%- include('../partials/server/header') %>
+
+<!-- Alert Messages -->
+<% if(typeof message !== 'undefined' && message) { %>
+<div class="mb-6 p-4 rounded-xl <%= message.type === 'success' ? 'bg-green-500/20 border border-green-500/30 text-green-400' : 'bg-red-500/20 border border-red-500/30 text-red-400' %>">
+    <i class="fa-solid <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
+    <%= message.text %>
+</div>
+<% } %>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Current Resources -->
+    <div class="glass p-6 rounded-2xl border border-white/5">
+        <h3 class="font-bold mb-4 text-white">Current Resources</h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-memory text-blue-400"></i>
+                    <span class="text-gray-400">RAM</span>
+                </div>
+                <span class="text-white font-bold"><%= s.ram || 512 %> MB</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-microchip text-purple-400"></i>
+                    <span class="text-gray-400">CPU</span>
+                </div>
+                <span class="text-white font-bold"><%= s.cpu || 50 %>%</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-hard-drive text-green-400"></i>
+                    <span class="text-gray-400">Disk</span>
+                </div>
+                <span class="text-white font-bold"><%= s.disk || 1024 %> MB</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Resources (Max for this server) -->
+    <div class="glass p-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5">
+        <h3 class="font-bold mb-4 text-yellow-400">Maximum Available</h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-memory text-blue-400"></i>
+                    <span class="text-gray-400">RAM</span>
+                </div>
+                <span class="font-bold text-blue-400"><%= available.ram %> MB</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-microchip text-purple-400"></i>
+                    <span class="text-gray-400">CPU</span>
+                </div>
+                <span class="font-bold text-purple-400"><%= available.cpu %>%</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-black/30 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-hard-drive text-green-400"></i>
+                    <span class="text-gray-400">Disk</span>
+                </div>
+                <span class="font-bold text-green-400"><%= available.disk %> MB</span>
+            </div>
+        </div>
+        <a href="/store" class="mt-4 block text-center text-yellow-400 hover:text-yellow-300 text-sm">
+            <i class="fa-solid fa-cart-plus mr-1"></i>Buy more resources
+        </a>
+    </div>
+</div>
+
+<!-- Update Resources -->
+<% if(isOwner || user.isAdmin) { %>
+<div class="glass p-6 rounded-2xl border border-white/5 mt-6">
+    <h3 class="font-bold mb-4 text-white">Update Resources</h3>
+    <form action="/server/<%= s.id %>/resources/update" method="POST" class="space-y-4">
+        <!-- RAM -->
+        <div>
+            <label class="text-xs text-gray-500 uppercase font-bold flex items-center gap-2">
+                <i class="fa-solid fa-memory text-blue-400"></i> RAM (MB)
+            </label>
+            <div class="flex items-center gap-4 mt-2">
+                <input type="range" name="ram" id="ramSlider" 
+                    min="128" max="<%= (s.ram || 512) + available.ram %>" step="128" 
+                    value="<%= s.ram || 512 %>"
+                    class="flex-1 h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    oninput="document.getElementById('ramValue').textContent = this.value + ' MB'; updateSummary()">
+                <span id="ramValue" class="text-white font-bold w-24 text-right"><%= s.ram || 512 %> MB</span>
+            </div>
+        </div>
+
+        <!-- CPU -->
+        <div>
+            <label class="text-xs text-gray-500 uppercase font-bold flex items-center gap-2">
+                <i class="fa-solid fa-microchip text-purple-400"></i> CPU (%)
+            </label>
+            <div class="flex items-center gap-4 mt-2">
+                <input type="range" name="cpu" id="cpuSlider" 
+                    min="10" max="<%= (s.cpu || 50) + available.cpu %>" step="10" 
+                    value="<%= s.cpu || 50 %>"
+                    class="flex-1 h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                    oninput="document.getElementById('cpuValue').textContent = this.value + '%'; updateSummary()">
+                <span id="cpuValue" class="text-white font-bold w-24 text-right"><%= s.cpu || 50 %>%</span>
+            </div>
+        </div>
+
+        <!-- Disk -->
+        <div>
+            <label class="text-xs text-gray-500 uppercase font-bold flex items-center gap-2">
+                <i class="fa-solid fa-hard-drive text-green-400"></i> Disk (MB)
+            </label>
+            <div class="flex items-center gap-4 mt-2">
+                <input type="range" name="disk" id="diskSlider" 
+                    min="256" max="<%= (s.disk || 1024) + available.disk %>" step="256" 
+                    value="<%= s.disk || 1024 %>"
+                    class="flex-1 h-2 bg-black/40 rounded-lg appearance-none cursor-pointer accent-green-500"
+                    oninput="document.getElementById('diskValue').textContent = this.value + ' MB'; updateSummary()">
+                <span id="diskValue" class="text-white font-bold w-24 text-right"><%= s.disk || 1024 %> MB</span>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div id="changesSummary" class="p-3 bg-black/30 rounded-xl text-sm hidden">
+            <div class="text-gray-500">No changes</div>
+        </div>
+
+        <button class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white w-full py-2 rounded-xl font-bold transition">
+            <i class="fa-solid fa-save mr-2"></i>Save Resources
+        </button>
+    </form>
+</div>
+<% } %>
+
+<script>
+const originalRam = <%= s.ram || 512 %>;
+const originalCpu = <%= s.cpu || 50 %>;
+const originalDisk = <%= s.disk || 1024 %>;
+
+function updateSummary() {
+    const newRam = parseInt(document.getElementById('ramSlider').value);
+    const newCpu = parseInt(document.getElementById('cpuSlider').value);
+    const newDisk = parseInt(document.getElementById('diskSlider').value);
+    
+    const ramDiff = newRam - originalRam;
+    const cpuDiff = newCpu - originalCpu;
+    const diskDiff = newDisk - originalDisk;
+    
+    const summaryEl = document.getElementById('changesSummary');
+    
+    if (ramDiff === 0 && cpuDiff === 0 && diskDiff === 0) {
+        summaryEl.classList.add('hidden');
+        return;
+    }
+    
+    summaryEl.classList.remove('hidden');
+    let html = '<div class="font-bold text-gray-400 mb-2">Changes:</div>';
+    
+    if (ramDiff !== 0) {
+        const sign = ramDiff > 0 ? '+' : '';
+        const color = ramDiff > 0 ? 'text-green-400' : 'text-red-400';
+        html += '<div class="flex justify-between"><span class="text-gray-400">RAM:</span><span class="' + color + '">' + sign + ramDiff + ' MB</span></div>';
+    }
+    if (cpuDiff !== 0) {
+        const sign = cpuDiff > 0 ? '+' : '';
+        const color = cpuDiff > 0 ? 'text-green-400' : 'text-red-400';
+        html += '<div class="flex justify-between"><span class="text-gray-400">CPU:</span><span class="' + color + '">' + sign + cpuDiff + '%</span></div>';
+    }
+    if (diskDiff !== 0) {
+        const sign = diskDiff > 0 ? '+' : '';
+        const color = diskDiff > 0 ? 'text-green-400' : 'text-red-400';
+        html += '<div class="flex justify-between"><span class="text-gray-400">Disk:</span><span class="' + color + '">' + sign + diskDiff + ' MB</span></div>';
+    }
+    
+    summaryEl.innerHTML = html;
+}
+</script>
+
+<%- include('../partials/footer') %>

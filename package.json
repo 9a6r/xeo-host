@@ -1,0 +1,30 @@
+{
+  "name": "Discord-Host-XeoStudio",
+  "version": "1.0.0",
+  "description": "Professional Discord Bot Hosting SaaS",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "archiver": "^7.0.1",
+    "better-sqlite3": "^12.4.1",
+    "body-parser": "^1.20.2",
+    "compressing": "^2.0.0",
+    "discord.js": "^14.25.1",
+    "dotenv": "^16.4.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-session": "^1.18.0",
+    "extract-zip": "^2.0.1",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.2.0",
+    "multer": "^1.4.5-lts.1",
+    "passport": "^0.7.0",
+    "passport-discord": "^0.1.4",
+    "pidusage": "^3.0.2",
+    "socket.io": "^4.7.4",
+    "tar": "^7.5.2"
+  }
+}

@@ -1,0 +1,721 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-4xl mx-auto">
+    <!-- Back Button & Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div class="flex items-center gap-4">
+            <a href="/tickets" class="glass w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <h2 class="text-xl font-bold text-white"><%= ticket.subject %></h2>
+                <div class="text-sm text-gray-400">
+                    Ticket #<%= ticket.id %> • Created <%= new Date(ticket.created_at).toLocaleDateString() %>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Priority Badge -->
+            <span class="px-3 py-1 rounded-lg text-xs font-bold uppercase <%= 
+                ticket.priority === 'urgent' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 
+                ticket.priority === 'high' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 
+                ticket.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                'bg-gray-500/20 text-gray-400 border border-gray-500/30' 
+            %>"><%= ticket.priority %></span>
+            <!-- Status Badge -->
+            <span id="statusBadge" class="px-3 py-1 rounded-lg text-xs font-bold uppercase <%= 
+                ticket.status === 'open' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+                ticket.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+                'bg-gray-500/20 text-gray-400 border border-gray-500/30' 
+            %>" data-status="<%= ticket.status %>"><%= ticket.status %></span>
+        </div>
+    </div>
+
+    <!-- Ticket Info -->
+    <div class="glass p-4 rounded-xl mb-6 flex flex-wrap gap-4 text-sm">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-folder text-indigo-400"></i>
+            <span class="text-gray-400">Category:</span>
+            <span class="text-white capitalize"><%= ticket.category %></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-user text-purple-400"></i>
+            <span class="text-gray-400">Created by:</span>
+            <span class="text-white"><%= ticket.username %></span>
+        </div>
+        <div class="flex items-center gap-2" id="connectionStatus">
+            <i class="fa-solid fa-circle text-green-400 text-xs animate-pulse"></i>
+            <span class="text-gray-400 text-xs">Live</span>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="space-y-1 mb-6 max-h-[500px] overflow-y-auto custom-scrollbar" id="messagesContainer">
+        <% messages.forEach((msg, index) => { 
+            const attachments = msg.attachments ? JSON.parse(msg.attachments) : null;
+        %>
+        <div class="p-3 rounded-lg hover:bg-white/5 transition group <%= msg.is_staff || msg.isAdmin ? 'bg-orange-500/5' : '' %>" data-msg-id="<%= msg.id %>">
+            <div class="flex items-start gap-3">
+                <img src="<%= msg.avatar ? `https://cdn.discordapp.com/avatars/${msg.user_id}/${msg.avatar}.png` : '/img/default-avatar.png' %>" 
+                     class="w-10 h-10 rounded-full mt-0.5" alt="Avatar">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-semibold text-white hover:underline cursor-pointer"><%= msg.username %></span>
+                        <% if(msg.is_staff || msg.isAdmin) { %>
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-orange-500 text-white">STAFF</span>
+                        <% } %>
+                        <span class="text-[11px] text-gray-500"><%= new Date(msg.created_at).toLocaleString() %></span>
+                    </div>
+                    <% if(msg.message) { %>
+                    <div class="text-gray-200 text-[15px] mt-1 whitespace-pre-wrap break-words leading-relaxed"><%= msg.message %></div>
+                    <% } %>
+                    <% if(attachments && attachments.length > 0) { %>
+                    <div class="mt-2 space-y-2">
+                        <% attachments.forEach(att => { %>
+                            <% if(att.type.startsWith('image/')) { %>
+                            <div class="inline-block">
+                                <img src="<%= att.path %>" alt="<%= att.name %>" 
+                                     onclick="openLightbox('<%= att.path %>')"
+                                     class="max-w-[400px] max-h-[300px] rounded-lg cursor-pointer hover:opacity-90 transition">
+                            </div>
+                            <% } else if(att.type.startsWith('video/')) { %>
+                            <div class="inline-block">
+                                <video src="<%= att.path %>" controls class="max-w-[400px] max-h-[300px] rounded-lg"></video>
+                            </div>
+                            <% } else { %>
+                            <a href="<%= att.path %>" download="<%= att.name %>" class="flex items-center gap-3 bg-[#2b2d31] p-3 rounded-lg border border-white/10 hover:bg-[#35373c] transition max-w-[400px]">
+                                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-file-arrow-down text-white"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm text-blue-400 hover:underline truncate"><%= att.name %></div>
+                                    <div class="text-xs text-gray-500"><%= (att.size / 1024).toFixed(1) %> KB</div>
+                                </div>
+                            </a>
+                            <% } %>
+                        <% }) %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center" onclick="closeLightbox()">
+        <!-- Toolbar -->
+        <div class="absolute top-4 right-4 flex items-center gap-2" onclick="event.stopPropagation()">
+            <div class="flex items-center bg-[#1e1f22] rounded-lg overflow-hidden">
+                <button onclick="zoomIn()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Zoom In (+)">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button onclick="zoomOut()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Zoom Out (-)">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <button onclick="resetZoom()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Reset (0)">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+                <div class="w-px h-6 bg-white/10"></div>
+                <button onclick="rotateLeft()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Rotate Left (L)">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button onclick="rotateRight()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Rotate Right (R)">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                <div class="w-px h-6 bg-white/10"></div>
+                <button onclick="openInNewTab()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Open in New Tab">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </button>
+                <a id="downloadBtn" href="" download class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 transition" title="Download">
+                    <i class="fa-solid fa-download"></i>
+                </a>
+            </div>
+            <button onclick="closeLightbox()" class="p-2.5 bg-[#1e1f22] rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition" title="Close (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <!-- Image Container -->
+        <div class="flex items-center justify-center w-full h-full p-16 overflow-hidden" onclick="event.stopPropagation()">
+            <img id="lightboxImg" src="" class="max-w-full max-h-full object-contain transition-transform duration-200" onclick="event.stopPropagation()">
+        </div>
+        
+        <!-- Indicator -->
+        <div id="zoomIndicator" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#1e1f22] px-3 py-1.5 rounded-lg text-sm text-gray-400 opacity-0 transition-opacity">
+            100%
+        </div>
+    </div>
+
+    <!-- Reply Form -->
+    <div id="replySection">
+        <% if(ticket.status !== 'closed') { %>
+        <div class="glass p-4 rounded-xl">
+            <div class="flex items-start gap-3">
+                <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" class="w-8 h-8 rounded-full" alt="Avatar">
+                <div class="flex-1">
+                    <textarea id="messageInput" rows="2" class="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-orange-500 transition resize-none text-sm" placeholder="Type your reply..."></textarea>
+                    
+                    <!-- Attachments Preview -->
+                    <div id="attachmentsPreview" class="hidden mt-2 flex flex-wrap gap-2"></div>
+                    
+                    <div class="flex items-center gap-2 mt-2">
+                        <button onclick="sendMessage()" id="sendBtn" class="bg-orange-600 hover:bg-orange-500 px-4 py-2 rounded-lg font-bold transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-paper-plane mr-1"></i>Send
+                        </button>
+                        <label class="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded-lg font-bold transition text-sm cursor-pointer">
+                            <i class="fa-solid fa-paperclip mr-1"></i>Attach
+                            <input type="file" id="fileInput" multiple class="hidden">
+                        </label>
+                        <% if(user.id === ticket.user_id || user.isAdmin) { %>
+                        <button onclick="closeTicket()" class="bg-gray-600/20 text-gray-400 hover:bg-gray-600 hover:text-white px-4 py-2 rounded-lg font-bold transition text-sm">
+                            <i class="fa-solid fa-check mr-1"></i>Close
+                        </button>
+                        <% } %>
+                        <span id="typingIndicator" class="text-xs text-gray-500 ml-2 hidden">
+                            <i class="fa-solid fa-ellipsis fa-beat"></i> Someone is typing...
+                        </span>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1">Max 5 files, 25MB each. Paste (Ctrl+V) or drag & drop supported.</p>
+                </div>
+            </div>
+        </div>
+        <% } else { %>
+        <div class="glass p-5 rounded-xl text-center" id="closedNotice">
+            <i class="fa-solid fa-lock text-4xl text-gray-500 mb-3"></i>
+            <h3 class="font-bold text-gray-400 mb-2">This ticket is closed</h3>
+            <p class="text-gray-500 text-sm mb-4">You can create a new ticket if you need further assistance</p>
+            <a href="/tickets" class="inline-block bg-orange-600 hover:bg-orange-500 px-6 py-2 rounded-xl font-bold transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i>Back to Tickets
+            </a>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Admin Actions -->
+    <% if(user.isAdmin) { %>
+    <div class="glass p-4 rounded-xl mt-6 border border-orange-500/20 bg-orange-500/5" id="adminActions">
+        <h3 class="font-bold text-orange-400 mb-3 text-sm">
+            <i class="fa-solid fa-shield mr-2"></i>Admin Actions
+        </h3>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="updateStatus('pending')" id="btnPending" class="bg-yellow-600/20 text-yellow-400 hover:bg-yellow-600 hover:text-white px-3 py-1.5 rounded-lg font-bold transition text-xs">
+                <i class="fa-solid fa-clock mr-1"></i>Pending
+            </button>
+            <button onclick="updateStatus('open')" id="btnOpen" class="bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white px-3 py-1.5 rounded-lg font-bold transition text-xs">
+                <i class="fa-solid fa-envelope-open mr-1"></i>Open
+            </button>
+            <button onclick="closeTicket()" id="btnClose" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-lg font-bold transition text-xs">
+                <i class="fa-solid fa-lock mr-1"></i>Close
+            </button>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const ticketId = <%= ticket.id %>;
+const currentUser = {
+    id: '<%= user.id %>',
+    username: '<%= user.username %>',
+    avatar: '<%= user.avatar %>',
+    isAdmin: <%= user.isAdmin ? 'true' : 'false' %>
+};
+let currentStatus = '<%= ticket.status %>';
+let pendingAttachments = [];
+
+const socket = io();
+
+// Join ticket room
+socket.emit('joinTicket', ticketId);
+
+// Connection status
+socket.on('connect', () => {
+    document.getElementById('connectionStatus').innerHTML = `
+        <i class="fa-solid fa-circle text-green-400 text-xs animate-pulse"></i>
+        <span class="text-gray-400 text-xs">Live</span>
+    `;
+});
+
+socket.on('disconnect', () => {
+    document.getElementById('connectionStatus').innerHTML = `
+        <i class="fa-solid fa-circle text-red-400 text-xs"></i>
+        <span class="text-gray-400 text-xs">Disconnected</span>
+    `;
+});
+
+// Receive new message
+socket.on('ticketMessage', (msg) => {
+    addMessageToUI(msg);
+    scrollToBottom();
+});
+
+// Status update
+socket.on('ticketStatus', (data) => {
+    currentStatus = data.status;
+    updateStatusUI(data.status);
+});
+
+// Typing indicator
+socket.on('ticketTyping', (data) => {
+    if (data.userId !== currentUser.id) {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+            setTimeout(() => indicator.classList.add('hidden'), 2000);
+        }
+    }
+});
+
+// Upload files function
+async function uploadFiles(files) {
+    if (files.length === 0) return;
+    
+    if (pendingAttachments.length + files.length > 5) {
+        alert('Maximum 5 files allowed');
+        return;
+    }
+    
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Uploading...';
+    
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    
+    try {
+        const response = await fetch(`/tickets/${ticketId}/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            pendingAttachments = [...pendingAttachments, ...data.attachments];
+            updateAttachmentsPreview();
+        } else {
+            alert(data.error || 'Upload failed');
+        }
+    } catch (err) {
+        alert('Upload failed');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1"></i>Send';
+}
+
+// File input handler
+document.getElementById('fileInput')?.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    await uploadFiles(files);
+    e.target.value = '';
+});
+
+// Paste handler (Ctrl+V)
+document.addEventListener('paste', async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    const files = [];
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file') {
+            const file = item.getAsFile();
+            if (file) files.push(file);
+        }
+    }
+    
+    if (files.length > 0) {
+        e.preventDefault();
+        await uploadFiles(files);
+    }
+});
+
+// Drag and drop handler
+const dropZone = document.getElementById('replySection');
+if (dropZone) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.add('border-orange-500', 'border-2', 'border-dashed');
+        });
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.remove('border-orange-500', 'border-2', 'border-dashed');
+        });
+    });
+    
+    dropZone.addEventListener('drop', async (e) => {
+        const files = Array.from(e.dataTransfer.files);
+        await uploadFiles(files);
+    });
+}
+
+// Update attachments preview
+function updateAttachmentsPreview() {
+    const preview = document.getElementById('attachmentsPreview');
+    if (!preview) return;
+    
+    if (pendingAttachments.length === 0) {
+        preview.classList.add('hidden');
+        preview.innerHTML = '';
+        return;
+    }
+    
+    preview.classList.remove('hidden');
+    preview.innerHTML = pendingAttachments.map((att, index) => {
+        if (att.type.startsWith('image/')) {
+            return `
+                <div class="relative group">
+                    <img src="${att.path}" class="w-16 h-16 object-cover rounded-lg border border-white/10">
+                    <button onclick="removeAttachment(${index})" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="relative group flex items-center gap-2 bg-black/30 px-2 py-1 rounded-lg border border-white/10">
+                    <i class="fa-solid fa-file text-orange-400 text-xs"></i>
+                    <span class="text-xs text-gray-300 truncate max-w-[80px]">${att.name}</span>
+                    <button onclick="removeAttachment(${index})" class="w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `;
+        }
+    }).join('');
+}
+
+// Remove attachment
+function removeAttachment(index) {
+    pendingAttachments.splice(index, 1);
+    updateAttachmentsPreview();
+}
+
+// Send message
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (message.length === 0 && pendingAttachments.length === 0) {
+        return;
+    }
+    
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Sending...';
+    
+    socket.emit('ticketReply', { 
+        ticketId, 
+        message: message || null,
+        attachments: pendingAttachments.length > 0 ? pendingAttachments : null
+    }, (response) => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1"></i>Send';
+        
+        if (response.success) {
+            input.value = '';
+            pendingAttachments = [];
+            updateAttachmentsPreview();
+        } else {
+            alert(response.error || 'Failed to send message');
+        }
+    });
+}
+
+// Close ticket
+function closeTicket() {
+    if (!confirm('Are you sure you want to close this ticket?')) return;
+    
+    socket.emit('ticketClose', { ticketId }, (response) => {
+        if (!response.success) {
+            alert(response.error || 'Failed to close ticket');
+        }
+    });
+}
+
+// Update status (admin)
+function updateStatus(status) {
+    socket.emit('ticketStatus', { ticketId, status }, (response) => {
+        if (!response.success) {
+            alert(response.error || 'Failed to update status');
+        }
+    });
+}
+
+// Lightbox functions
+let currentZoom = 1;
+let currentRotation = 0;
+let currentImageSrc = '';
+
+function openLightbox(src) {
+    currentImageSrc = src;
+    currentZoom = 1;
+    currentRotation = 0;
+    const img = document.getElementById('lightboxImg');
+    img.src = src;
+    applyTransform();
+    document.getElementById('downloadBtn').href = src;
+    document.getElementById('lightbox').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    showIndicator(Math.round(currentZoom * 100) + '%');
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').classList.add('hidden');
+    document.body.style.overflow = '';
+    currentZoom = 1;
+    currentRotation = 0;
+}
+
+function zoomIn() {
+    if (currentZoom < 5) {
+        currentZoom += 0.5;
+        applyTransform();
+        showIndicator(Math.round(currentZoom * 100) + '%');
+    }
+}
+
+function zoomOut() {
+    if (currentZoom > 0.5) {
+        currentZoom -= 0.5;
+        applyTransform();
+        showIndicator(Math.round(currentZoom * 100) + '%');
+    }
+}
+
+function resetZoom() {
+    currentZoom = 1;
+    currentRotation = 0;
+    applyTransform();
+    showIndicator('Reset');
+}
+
+function rotateLeft() {
+    currentRotation -= 90;
+    applyTransform();
+    showIndicator(currentRotation + '°');
+}
+
+function rotateRight() {
+    currentRotation += 90;
+    applyTransform();
+    showIndicator(currentRotation + '°');
+}
+
+function applyTransform() {
+    document.getElementById('lightboxImg').style.transform = `scale(${currentZoom}) rotate(${currentRotation}deg)`;
+}
+
+function showIndicator(text) {
+    const indicator = document.getElementById('zoomIndicator');
+    indicator.textContent = text;
+    indicator.style.opacity = '1';
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+    }, 1500);
+}
+
+function openInNewTab() {
+    window.open(currentImageSrc, '_blank');
+}
+
+// Keyboard shortcuts for lightbox
+document.addEventListener('keydown', (e) => {
+    const lightbox = document.getElementById('lightbox');
+    if (lightbox.classList.contains('hidden')) return;
+    
+    switch(e.key.toLowerCase()) {
+        case 'escape':
+            closeLightbox();
+            break;
+        case '+':
+        case '=':
+            zoomIn();
+            break;
+        case '-':
+            zoomOut();
+            break;
+        case '0':
+            resetZoom();
+            break;
+        case 'l':
+            rotateLeft();
+            break;
+        case 'r':
+            rotateRight();
+            break;
+    }
+});
+
+// Mouse wheel zoom
+document.getElementById('lightbox')?.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+        zoomIn();
+    } else {
+        zoomOut();
+    }
+}, { passive: false });
+
+// Add message to UI
+function addMessageToUI(msg) {
+    const container = document.getElementById('messagesContainer');
+    const isStaff = msg.is_staff || msg.isAdmin;
+    
+    const div = document.createElement('div');
+    div.className = `p-3 rounded-lg hover:bg-white/5 transition group ${isStaff ? 'bg-orange-500/5' : ''} animate-fadeIn`;
+    div.dataset.msgId = msg.id;
+    
+    let attachmentsHtml = '';
+    if (msg.attachments && msg.attachments.length > 0) {
+        attachmentsHtml = '<div class="mt-2 space-y-2">' + msg.attachments.map(att => {
+            if (att.type.startsWith('image/')) {
+                return `<div class="inline-block">
+                    <img src="${att.path}" alt="${att.name}" 
+                         onclick="openLightbox('${att.path}')"
+                         class="max-w-[400px] max-h-[300px] rounded-lg cursor-pointer hover:opacity-90 transition">
+                </div>`;
+            } else if (att.type.startsWith('video/')) {
+                return `<div class="inline-block">
+                    <video src="${att.path}" controls class="max-w-[400px] max-h-[300px] rounded-lg"></video>
+                </div>`;
+            } else {
+                return `<a href="${att.path}" download="${att.name}" class="flex items-center gap-3 bg-[#2b2d31] p-3 rounded-lg border border-white/10 hover:bg-[#35373c] transition max-w-[400px]">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-file-arrow-down text-white"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-blue-400 hover:underline truncate">${att.name}</div>
+                        <div class="text-xs text-gray-500">${(att.size / 1024).toFixed(1)} KB</div>
+                    </div>
+                </a>`;
+            }
+        }).join('') + '</div>';
+    }
+    
+    div.innerHTML = `
+        <div class="flex items-start gap-3">
+            <img src="${msg.avatar ? 'https://cdn.discordapp.com/avatars/' + msg.user_id + '/' + msg.avatar + '.png' : '/img/default-avatar.png'}" 
+                 class="w-10 h-10 rounded-full mt-0.5" alt="Avatar">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-semibold text-white hover:underline cursor-pointer">${msg.username}</span>
+                    ${isStaff ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-orange-500 text-white">STAFF</span>' : ''}
+                    <span class="text-[11px] text-gray-500">${new Date(msg.created_at).toLocaleString()}</span>
+                </div>
+                ${msg.message ? `<div class="text-gray-200 text-[15px] mt-1 whitespace-pre-wrap break-words leading-relaxed">${escapeHtml(msg.message)}</div>` : ''}
+                ${attachmentsHtml}
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(div);
+}
+
+// Update status UI
+function updateStatusUI(status) {
+    const badge = document.getElementById('statusBadge');
+    const replySection = document.getElementById('replySection');
+    
+    badge.dataset.status = status;
+    badge.textContent = status.toUpperCase();
+    badge.className = 'px-3 py-1 rounded-lg text-xs font-bold uppercase ' + 
+        (status === 'open' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 
+         status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 
+         'bg-gray-500/20 text-gray-400 border border-gray-500/30');
+    
+    if (status === 'closed') {
+        replySection.innerHTML = `
+            <div class="glass p-5 rounded-xl text-center">
+                <i class="fa-solid fa-lock text-4xl text-gray-500 mb-3"></i>
+                <h3 class="font-bold text-gray-400 mb-2">This ticket is closed</h3>
+                <p class="text-gray-500 text-sm mb-4">You can create a new ticket if you need further assistance</p>
+                <a href="/tickets" class="inline-block bg-orange-600 hover:bg-orange-500 px-6 py-2 rounded-xl font-bold transition">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Back to Tickets
+                </a>
+            </div>
+        `;
+        
+        // Update admin buttons
+        const adminActions = document.getElementById('adminActions');
+        if (adminActions) {
+            adminActions.innerHTML = `
+                <h3 class="font-bold text-orange-400 mb-3 text-sm">
+                    <i class="fa-solid fa-shield mr-2"></i>Admin Actions
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="updateStatus('open')" class="bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white px-3 py-1.5 rounded-lg font-bold transition text-xs">
+                        <i class="fa-solid fa-unlock mr-1"></i>Reopen
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Scroll to bottom
+function scrollToBottom() {
+    const container = document.getElementById('messagesContainer');
+    container.scrollTop = container.scrollHeight;
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Typing indicator
+let typingTimeout;
+document.getElementById('messageInput')?.addEventListener('input', () => {
+    clearTimeout(typingTimeout);
+    socket.emit('ticketTyping', { ticketId });
+    typingTimeout = setTimeout(() => {}, 1000);
+});
+
+// Send on Enter (Shift+Enter for new line)
+document.getElementById('messageInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Initial scroll
+scrollToBottom();
+</script>
+
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+</style>
+
+<%- include('./partials/footer') %>

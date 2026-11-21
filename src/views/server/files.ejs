@@ -1,0 +1,1707 @@
+<%- include('../partials/header') %>
+<%- include('../partials/server/header') %>
+
+
+
+<div id="global-toast" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+<div class="flex flex-col md:flex-row justify-between mb-4 items-start md:items-center gap-3">
+    <div class="flex items-center gap-2">
+        <button id="btnGoBack" class="w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-lg transition">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div class="bg-black/30 border border-white/10 px-4 py-2 rounded-lg">
+            <div id="currentPath" class="text-gray-400 text-sm font-mono" dir="auto">/home/container</div>
+        </div>
+    </div>
+    <div class="flex gap-2">
+        <button id="btnUpload" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition text-sm">
+            <i class="fa-solid fa-upload"></i>
+            <span>Upload</span>
+        </button>
+        <button id="btnNewFile" class="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition text-sm">
+            <i class="fa-solid fa-file-circle-plus"></i>
+            <span>New File</span>
+        </button>
+        <button id="btnNewFolder" class="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-medium transition text-sm">
+            <i class="fa-solid fa-folder-plus"></i>
+            <span>New Folder</span>
+        </button>
+    </div>
+</div>
+
+<!-- Drag & Drop Overlay -->
+<div id="dropOverlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="text-center p-8 border-2 border-dashed border-blue-500 rounded-3xl bg-blue-500/10">
+        <i class="fa-solid fa-cloud-arrow-up text-6xl text-blue-400 mb-4"></i>
+        <h3 class="text-2xl font-bold text-white mb-2">Drop files here</h3>
+        <p class="text-gray-400">Release to upload files to current directory</p>
+    </div>
+</div>
+
+
+
+
+
+<div class="glass rounded-xl overflow-hidden shadow-inner">
+    <table class="w-full text-left text-sm">
+        <thead class="bg-white/5 text-gray-400 text-xs uppercase">
+            <tr>
+                <th class="p-3 w-10">
+                    <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 rounded cursor-pointer accent-yellow-500">
+                </th>
+                <th class="p-3">Name</th>
+                <th class="p-3">Size</th>
+                <th class="p-3 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="fileTableBody">
+            <% files.forEach(f => { %>
+            <tr class="border-b border-white/5 hover:bg-white/5 transition file-row group" data-name="<%= encodeURIComponent(f.name) %>" data-isdir="<%= f.isDir %>">
+                <td class="p-3">
+                    <input type="checkbox" class="file-checkbox w-4 h-4 rounded cursor-pointer accent-yellow-500" data-name="<%= encodeURIComponent(f.name) %>">
+                </td>
+                <td class="p-3 cursor-pointer file-name" dir="auto">
+                    <% if(f.isDir) { %>
+                        <i class="fa-solid fa-folder text-yellow-500 mr-2"></i>
+                    <% } else { 
+                        const ext = f.name.split('.').pop().toLowerCase();
+                        const fileName = f.name.toLowerCase();
+                        let icon = 'fa-solid fa-file';
+                        let color = 'text-gray-400';
+                        
+                        // Special files by exact name (check first)
+                        if(fileName === 'package.json') { icon = 'fa-brands fa-npm'; color = 'text-red-500'; }
+                        else if(fileName === 'package-lock.json' || fileName === 'yarn.lock' || fileName === 'pnpm-lock.yaml' || fileName === 'bun.lockb') { icon = 'fa-solid fa-lock'; color = 'text-yellow-600'; }
+                        else if(fileName === 'dockerfile' || fileName.startsWith('dockerfile.')) { icon = 'fa-brands fa-docker'; color = 'text-blue-500'; }
+                        else if(fileName === 'docker-compose.yml' || fileName === 'docker-compose.yaml' || fileName === 'compose.yml' || fileName === 'compose.yaml') { icon = 'fa-brands fa-docker'; color = 'text-blue-400'; }
+                        else if(fileName === '.dockerignore') { icon = 'fa-brands fa-docker'; color = 'text-gray-500'; }
+                        else if(fileName === '.gitignore' || fileName === '.gitattributes' || fileName === '.gitmodules') { icon = 'fa-brands fa-git-alt'; color = 'text-orange-500'; }
+                        else if(fileName === '.env' || fileName.startsWith('.env.')) { icon = 'fa-solid fa-key'; color = 'text-green-500'; }
+                        else if(fileName === 'license' || fileName === 'license.md' || fileName === 'license.txt') { icon = 'fa-solid fa-scale-balanced'; color = 'text-yellow-400'; }
+                        else if(fileName === 'readme.md' || fileName === 'readme.txt' || fileName === 'readme') { icon = 'fa-solid fa-book'; color = 'text-blue-400'; }
+                        else if(fileName === 'makefile' || fileName === 'gnumakefile') { icon = 'fa-solid fa-gear'; color = 'text-orange-500'; }
+                        else if(fileName === 'cmakelists.txt') { icon = 'fa-solid fa-gear'; color = 'text-blue-500'; }
+                        else if(fileName === 'rakefile') { icon = 'fa-solid fa-gem'; color = 'text-red-500'; }
+                        else if(fileName === 'gemfile' || fileName === 'gemfile.lock') { icon = 'fa-solid fa-gem'; color = 'text-red-400'; }
+                        else if(fileName === 'cargo.toml' || fileName === 'cargo.lock') { icon = 'fa-brands fa-rust'; color = 'text-orange-600'; }
+                        else if(fileName === 'go.mod' || fileName === 'go.sum') { icon = 'fa-brands fa-golang'; color = 'text-cyan-500'; }
+                        else if(fileName === 'requirements.txt' || fileName === 'pipfile' || fileName === 'pipfile.lock' || fileName === 'pyproject.toml' || fileName === 'setup.py' || fileName === 'setup.cfg') { icon = 'fa-brands fa-python'; color = 'text-yellow-300'; }
+                        else if(fileName === 'composer.json' || fileName === 'composer.lock') { icon = 'fa-brands fa-php'; color = 'text-indigo-400'; }
+                        else if(fileName === 'tsconfig.json' || fileName === 'jsconfig.json') { icon = 'fa-solid fa-gear'; color = 'text-blue-500'; }
+                        else if(fileName === 'webpack.config.js' || fileName === 'webpack.config.ts') { icon = 'fa-solid fa-cube'; color = 'text-blue-400'; }
+                        else if(fileName === 'vite.config.js' || fileName === 'vite.config.ts') { icon = 'fa-solid fa-bolt'; color = 'text-purple-500'; }
+                        else if(fileName === 'rollup.config.js' || fileName === 'rollup.config.ts') { icon = 'fa-solid fa-cube'; color = 'text-red-500'; }
+                        else if(fileName === 'babel.config.js' || fileName === '.babelrc') { icon = 'fa-solid fa-cube'; color = 'text-yellow-500'; }
+                        else if(fileName === '.eslintrc' || fileName === '.eslintrc.js' || fileName === '.eslintrc.json' || fileName === 'eslint.config.js') { icon = 'fa-solid fa-spell-check'; color = 'text-purple-500'; }
+                        else if(fileName === '.prettierrc' || fileName === '.prettierrc.js' || fileName === '.prettierrc.json' || fileName === 'prettier.config.js') { icon = 'fa-solid fa-wand-magic-sparkles'; color = 'text-pink-400'; }
+                        else if(fileName === '.editorconfig') { icon = 'fa-solid fa-sliders'; color = 'text-gray-400'; }
+                        else if(fileName === '.htaccess') { icon = 'fa-solid fa-server'; color = 'text-green-600'; }
+                        else if(fileName === 'nginx.conf') { icon = 'fa-solid fa-server'; color = 'text-green-500'; }
+                        else if(fileName === 'procfile') { icon = 'fa-solid fa-server'; color = 'text-purple-500'; }
+                        else if(fileName === 'vercel.json' || fileName === 'now.json') { icon = 'fa-solid fa-triangle'; color = 'text-white'; }
+                        else if(fileName === 'netlify.toml') { icon = 'fa-solid fa-globe'; color = 'text-teal-400'; }
+                        else if(fileName === '.travis.yml') { icon = 'fa-solid fa-circle-check'; color = 'text-red-400'; }
+                        else if(fileName === 'jenkinsfile') { icon = 'fa-solid fa-circle-check'; color = 'text-red-500'; }
+                        else if(fileName === '.gitlab-ci.yml') { icon = 'fa-brands fa-gitlab'; color = 'text-orange-500'; }
+                        else if(fileName === 'azure-pipelines.yml') { icon = 'fa-brands fa-microsoft'; color = 'text-blue-500'; }
+                        else if(fileName === '.github') { icon = 'fa-brands fa-github'; color = 'text-white'; }
+                        
+                        // JavaScript / TypeScript / Node
+                        else if(['js', 'mjs', 'cjs'].includes(ext)) { icon = 'fa-brands fa-js'; color = 'text-yellow-400'; }
+                        else if(['ts'].includes(ext)) { icon = 'fa-solid fa-code'; color = 'text-blue-500'; }
+                        else if(['tsx'].includes(ext)) { icon = 'fa-brands fa-react'; color = 'text-blue-400'; }
+                        else if(['jsx'].includes(ext)) { icon = 'fa-brands fa-react'; color = 'text-cyan-400'; }
+                        else if(['vue'].includes(ext)) { icon = 'fa-brands fa-vuejs'; color = 'text-green-500'; }
+                        else if(['svelte'].includes(ext)) { icon = 'fa-solid fa-fire'; color = 'text-orange-500'; }
+                        else if(['astro'].includes(ext)) { icon = 'fa-solid fa-rocket'; color = 'text-purple-400'; }
+                        
+                        // Web
+                        else if(['html', 'htm', 'xhtml'].includes(ext)) { icon = 'fa-brands fa-html5'; color = 'text-orange-500'; }
+                        else if(['css'].includes(ext)) { icon = 'fa-brands fa-css3-alt'; color = 'text-blue-400'; }
+                        else if(['scss', 'sass'].includes(ext)) { icon = 'fa-brands fa-sass'; color = 'text-pink-400'; }
+                        else if(['less'].includes(ext)) { icon = 'fa-brands fa-less'; color = 'text-blue-600'; }
+                        else if(['styl', 'stylus'].includes(ext)) { icon = 'fa-solid fa-paintbrush'; color = 'text-green-400'; }
+                        
+                        // Programming Languages
+                        else if(['py', 'pyw', 'pyx', 'pxd', 'pxi'].includes(ext)) { icon = 'fa-brands fa-python'; color = 'text-yellow-300'; }
+                        else if(['ipynb'].includes(ext)) { icon = 'fa-solid fa-book-open'; color = 'text-orange-400'; }
+                        else if(['java'].includes(ext)) { icon = 'fa-brands fa-java'; color = 'text-red-400'; }
+                        else if(['jar', 'war', 'ear'].includes(ext)) { icon = 'fa-brands fa-java'; color = 'text-red-600'; }
+                        else if(['class'].includes(ext)) { icon = 'fa-brands fa-java'; color = 'text-red-500'; }
+                        else if(['kt', 'kts'].includes(ext)) { icon = 'fa-solid fa-k'; color = 'text-purple-500'; }
+                        else if(['scala', 'sc'].includes(ext)) { icon = 'fa-solid fa-s'; color = 'text-red-500'; }
+                        else if(['groovy', 'gvy', 'gy', 'gsh'].includes(ext)) { icon = 'fa-solid fa-star'; color = 'text-blue-400'; }
+                        else if(['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phps'].includes(ext)) { icon = 'fa-brands fa-php'; color = 'text-indigo-400'; }
+                        else if(['rb', 'erb', 'rake'].includes(ext)) { icon = 'fa-solid fa-gem'; color = 'text-red-500'; }
+                        else if(['go'].includes(ext)) { icon = 'fa-brands fa-golang'; color = 'text-cyan-500'; }
+                        else if(['rs'].includes(ext)) { icon = 'fa-brands fa-rust'; color = 'text-orange-600'; }
+                        else if(['c'].includes(ext)) { icon = 'fa-solid fa-c'; color = 'text-blue-600'; }
+                        else if(['h'].includes(ext)) { icon = 'fa-solid fa-h'; color = 'text-blue-500'; }
+                        else if(['cpp', 'cc', 'cxx', 'c++'].includes(ext)) { icon = 'fa-solid fa-c'; color = 'text-blue-500'; }
+                        else if(['hpp', 'hh', 'hxx', 'h++'].includes(ext)) { icon = 'fa-solid fa-h'; color = 'text-blue-400'; }
+                        else if(['cs'].includes(ext)) { icon = 'fa-solid fa-hashtag'; color = 'text-purple-500'; }
+                        else if(['fs', 'fsx', 'fsi'].includes(ext)) { icon = 'fa-solid fa-f'; color = 'text-blue-400'; }
+                        else if(['vb', 'vbs'].includes(ext)) { icon = 'fa-solid fa-v'; color = 'text-blue-600'; }
+                        else if(['swift'].includes(ext)) { icon = 'fa-brands fa-swift'; color = 'text-orange-500'; }
+                        else if(['m', 'mm'].includes(ext)) { icon = 'fa-brands fa-apple'; color = 'text-gray-400'; }
+                        else if(['dart'].includes(ext)) { icon = 'fa-solid fa-bullseye'; color = 'text-blue-400'; }
+                        else if(['lua'].includes(ext)) { icon = 'fa-solid fa-moon'; color = 'text-blue-500'; }
+                        else if(['pl', 'pm', 'pod', 't'].includes(ext)) { icon = 'fa-solid fa-camel'; color = 'text-blue-400'; }
+                        else if(['r', 'rdata', 'rds', 'rda'].includes(ext)) { icon = 'fa-brands fa-r-project'; color = 'text-blue-500'; }
+                        else if(['jl'].includes(ext)) { icon = 'fa-solid fa-circle-dot'; color = 'text-purple-500'; }
+                        else if(['ex', 'exs'].includes(ext)) { icon = 'fa-solid fa-droplet'; color = 'text-purple-400'; }
+                        else if(['erl', 'hrl'].includes(ext)) { icon = 'fa-solid fa-e'; color = 'text-red-500'; }
+                        else if(['clj', 'cljs', 'cljc', 'edn'].includes(ext)) { icon = 'fa-solid fa-circle'; color = 'text-green-500'; }
+                        else if(['hs', 'lhs'].includes(ext)) { icon = 'fa-solid fa-lambda'; color = 'text-purple-500'; }
+                        else if(['ml', 'mli'].includes(ext)) { icon = 'fa-solid fa-o'; color = 'text-orange-500'; }
+                        else if(['nim'].includes(ext)) { icon = 'fa-solid fa-crown'; color = 'text-yellow-500'; }
+                        else if(['zig'].includes(ext)) { icon = 'fa-solid fa-z'; color = 'text-orange-400'; }
+                        else if(['v', 'vh'].includes(ext)) { icon = 'fa-solid fa-microchip'; color = 'text-blue-400'; }
+                        else if(['vhd', 'vhdl'].includes(ext)) { icon = 'fa-solid fa-microchip'; color = 'text-green-500'; }
+                        else if(['asm', 's'].includes(ext)) { icon = 'fa-solid fa-microchip'; color = 'text-yellow-600'; }
+                        else if(['wasm', 'wat'].includes(ext)) { icon = 'fa-solid fa-cube'; color = 'text-purple-600'; }
+                        else if(['sol'].includes(ext)) { icon = 'fa-brands fa-ethereum'; color = 'text-gray-400'; }
+                        else if(['move'].includes(ext)) { icon = 'fa-solid fa-coins'; color = 'text-blue-400'; }
+                        
+                        // Shell & Scripts
+                        else if(['sh', 'bash', 'zsh', 'fish'].includes(ext)) { icon = 'fa-solid fa-terminal'; color = 'text-green-400'; }
+                        else if(['bat', 'cmd'].includes(ext)) { icon = 'fa-brands fa-windows'; color = 'text-blue-400'; }
+                        else if(['ps1', 'psm1', 'psd1'].includes(ext)) { icon = 'fa-solid fa-terminal'; color = 'text-blue-500'; }
+                        else if(['awk'].includes(ext)) { icon = 'fa-solid fa-terminal'; color = 'text-gray-400'; }
+                        
+                        // Data & Config
+                        else if(['json', 'jsonc', 'json5'].includes(ext)) { icon = 'fa-solid fa-brackets-curly'; color = 'text-yellow-500'; }
+                        else if(['xml'].includes(ext)) { icon = 'fa-solid fa-code'; color = 'text-orange-400'; }
+                        else if(['yaml', 'yml'].includes(ext)) { icon = 'fa-solid fa-file-code'; color = 'text-red-400'; }
+                        else if(['toml'].includes(ext)) { icon = 'fa-solid fa-file-code'; color = 'text-gray-500'; }
+                        else if(['ini', 'cfg', 'conf', 'config'].includes(ext)) { icon = 'fa-solid fa-gear'; color = 'text-gray-400'; }
+                        else if(['properties'].includes(ext)) { icon = 'fa-solid fa-list'; color = 'text-purple-400'; }
+                        else if(['env'].includes(ext)) { icon = 'fa-solid fa-key'; color = 'text-green-500'; }
+                        else if(['csv'].includes(ext)) { icon = 'fa-solid fa-table'; color = 'text-green-500'; }
+                        else if(['tsv'].includes(ext)) { icon = 'fa-solid fa-table'; color = 'text-blue-400'; }
+                        else if(['graphql', 'gql'].includes(ext)) { icon = 'fa-solid fa-diagram-project'; color = 'text-pink-500'; }
+                        else if(['proto'].includes(ext)) { icon = 'fa-solid fa-diagram-project'; color = 'text-blue-400'; }
+                        
+                        // Documents
+                        else if(['md', 'markdown', 'mdown', 'mkd'].includes(ext)) { icon = 'fa-brands fa-markdown'; color = 'text-white'; }
+                        else if(['mdx'].includes(ext)) { icon = 'fa-brands fa-markdown'; color = 'text-yellow-400'; }
+                        else if(['txt', 'text'].includes(ext)) { icon = 'fa-solid fa-file-lines'; color = 'text-gray-400'; }
+                        else if(['log'].includes(ext)) { icon = 'fa-solid fa-scroll'; color = 'text-gray-500'; }
+                        else if(['pdf'].includes(ext)) { icon = 'fa-solid fa-file-pdf'; color = 'text-red-500'; }
+                        else if(['doc', 'docx'].includes(ext)) { icon = 'fa-solid fa-file-word'; color = 'text-blue-600'; }
+                        else if(['xls', 'xlsx'].includes(ext)) { icon = 'fa-solid fa-file-excel'; color = 'text-green-600'; }
+                        else if(['ppt', 'pptx'].includes(ext)) { icon = 'fa-solid fa-file-powerpoint'; color = 'text-orange-500'; }
+                        else if(['odt', 'ods', 'odp'].includes(ext)) { icon = 'fa-solid fa-file'; color = 'text-blue-400'; }
+                        else if(['rtf'].includes(ext)) { icon = 'fa-solid fa-file-lines'; color = 'text-blue-500'; }
+                        else if(['tex', 'latex'].includes(ext)) { icon = 'fa-solid fa-square-root-variable'; color = 'text-green-600'; }
+                        else if(['bib'].includes(ext)) { icon = 'fa-solid fa-book'; color = 'text-green-500'; }
+                        else if(['rst'].includes(ext)) { icon = 'fa-solid fa-file-lines'; color = 'text-gray-500'; }
+                        else if(['adoc', 'asciidoc'].includes(ext)) { icon = 'fa-solid fa-file-lines'; color = 'text-blue-400'; }
+                        else if(['org'].includes(ext)) { icon = 'fa-solid fa-sitemap'; color = 'text-teal-500'; }
+                        
+                        // Images
+                        else if(['png'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-purple-400'; }
+                        else if(['jpg', 'jpeg'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-orange-400'; }
+                        else if(['gif'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-green-400'; }
+                        else if(['webp'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-blue-400'; }
+                        else if(['svg'].includes(ext)) { icon = 'fa-solid fa-bezier-curve'; color = 'text-yellow-500'; }
+                        else if(['ico', 'icns'].includes(ext)) { icon = 'fa-solid fa-icons'; color = 'text-blue-500'; }
+                        else if(['bmp'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-gray-400'; }
+                        else if(['tiff', 'tif'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-purple-500'; }
+                        else if(['psd'].includes(ext)) { icon = 'fa-solid fa-image'; color = 'text-blue-600'; }
+                        else if(['ai'].includes(ext)) { icon = 'fa-solid fa-bezier-curve'; color = 'text-orange-600'; }
+                        else if(['sketch'].includes(ext)) { icon = 'fa-solid fa-pen-ruler'; color = 'text-yellow-500'; }
+                        else if(['fig', 'figma'].includes(ext)) { icon = 'fa-brands fa-figma'; color = 'text-purple-500'; }
+                        else if(['xd'].includes(ext)) { icon = 'fa-solid fa-pen-ruler'; color = 'text-pink-500'; }
+                        else if(['raw', 'cr2', 'nef', 'arw'].includes(ext)) { icon = 'fa-solid fa-camera'; color = 'text-gray-500'; }
+                        
+                        // Archives
+                        else if(['zip'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-yellow-600'; }
+                        else if(['rar'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-purple-500'; }
+                        else if(['7z'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-green-500'; }
+                        else if(['tar'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-orange-500'; }
+                        else if(['gz', 'gzip'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-red-400'; }
+                        else if(['tgz'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-orange-400'; }
+                        else if(['bz2', 'bzip2'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-yellow-500'; }
+                        else if(['xz'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-blue-500'; }
+                        else if(['lz', 'lzma'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-gray-500'; }
+                        else if(['zst', 'zstd'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-green-400'; }
+                        else if(['cab'].includes(ext)) { icon = 'fa-solid fa-file-zipper'; color = 'text-blue-400'; }
+                        else if(['iso'].includes(ext)) { icon = 'fa-solid fa-compact-disc'; color = 'text-blue-500'; }
+                        else if(['dmg'].includes(ext)) { icon = 'fa-brands fa-apple'; color = 'text-gray-400'; }
+                        else if(['deb'].includes(ext)) { icon = 'fa-brands fa-debian'; color = 'text-red-500'; }
+                        else if(['rpm'].includes(ext)) { icon = 'fa-brands fa-redhat'; color = 'text-red-600'; }
+                        else if(['apk'].includes(ext)) { icon = 'fa-brands fa-android'; color = 'text-green-500'; }
+                        else if(['ipa'].includes(ext)) { icon = 'fa-brands fa-apple'; color = 'text-gray-400'; }
+                        
+                        // Audio
+                        else if(['mp3'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-pink-400'; }
+                        else if(['wav'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-blue-400'; }
+                        else if(['ogg', 'oga'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-orange-400'; }
+                        else if(['flac'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-yellow-500'; }
+                        else if(['aac'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-purple-400'; }
+                        else if(['m4a'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-gray-400'; }
+                        else if(['wma'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-blue-500'; }
+                        else if(['aiff', 'aif'].includes(ext)) { icon = 'fa-solid fa-file-audio'; color = 'text-blue-400'; }
+                        else if(['mid', 'midi'].includes(ext)) { icon = 'fa-solid fa-music'; color = 'text-green-400'; }
+                        
+                        // Video
+                        else if(['mp4', 'm4v'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-red-400'; }
+                        else if(['avi'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-blue-500'; }
+                        else if(['mkv'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-green-500'; }
+                        else if(['mov'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-gray-400'; }
+                        else if(['webm'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-green-400'; }
+                        else if(['wmv'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-blue-400'; }
+                        else if(['flv'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-red-500'; }
+                        else if(['ogv'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-orange-400'; }
+                        else if(['3gp'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-purple-400'; }
+                        else if(['ts'].includes(ext) && !['ts'].includes(ext)) { icon = 'fa-solid fa-file-video'; color = 'text-blue-400'; }
+                        
+                        // Fonts
+                        else if(['ttf'].includes(ext)) { icon = 'fa-solid fa-font'; color = 'text-gray-400'; }
+                        else if(['otf'].includes(ext)) { icon = 'fa-solid fa-font'; color = 'text-blue-400'; }
+                        else if(['woff', 'woff2'].includes(ext)) { icon = 'fa-solid fa-font'; color = 'text-purple-400'; }
+                        else if(['eot'].includes(ext)) { icon = 'fa-solid fa-font'; color = 'text-blue-500'; }
+                        
+                        // Database
+                        else if(['sql'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-blue-400'; }
+                        else if(['db', 'sqlite', 'sqlite3'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-blue-500'; }
+                        else if(['mdb', 'accdb'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-red-400'; }
+                        else if(['pgsql'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-blue-600'; }
+                        else if(['mysql'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-orange-500'; }
+                        else if(['mongodb'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-green-500'; }
+                        else if(['redis'].includes(ext)) { icon = 'fa-solid fa-database'; color = 'text-red-500'; }
+                        
+                        // 3D & CAD
+                        else if(['obj', 'fbx', 'dae', 'gltf', 'glb'].includes(ext)) { icon = 'fa-solid fa-cube'; color = 'text-orange-400'; }
+                        else if(['stl'].includes(ext)) { icon = 'fa-solid fa-cube'; color = 'text-gray-400'; }
+                        else if(['blend'].includes(ext)) { icon = 'fa-solid fa-cube'; color = 'text-orange-500'; }
+                        else if(['max', '3ds'].includes(ext)) { icon = 'fa-solid fa-cube'; color = 'text-blue-500'; }
+                        else if(['dwg', 'dxf'].includes(ext)) { icon = 'fa-solid fa-compass-drafting'; color = 'text-red-500'; }
+                        
+                        // Executables & Binaries
+                        else if(['exe'].includes(ext)) { icon = 'fa-brands fa-windows'; color = 'text-blue-500'; }
+                        else if(['msi'].includes(ext)) { icon = 'fa-brands fa-windows'; color = 'text-blue-400'; }
+                        else if(['dll'].includes(ext)) { icon = 'fa-solid fa-gear'; color = 'text-blue-400'; }
+                        else if(['so'].includes(ext)) { icon = 'fa-solid fa-gear'; color = 'text-gray-400'; }
+                        else if(['dylib'].includes(ext)) { icon = 'fa-solid fa-gear'; color = 'text-gray-500'; }
+                        else if(['app'].includes(ext)) { icon = 'fa-brands fa-apple'; color = 'text-gray-400'; }
+                        else if(['bin'].includes(ext)) { icon = 'fa-solid fa-microchip'; color = 'text-gray-500'; }
+                        else if(['out'].includes(ext)) { icon = 'fa-solid fa-terminal'; color = 'text-green-400'; }
+                        
+                        // Certificates & Keys
+                        else if(['pem', 'crt', 'cer', 'der'].includes(ext)) { icon = 'fa-solid fa-certificate'; color = 'text-green-500'; }
+                        else if(['key'].includes(ext)) { icon = 'fa-solid fa-key'; color = 'text-yellow-500'; }
+                        else if(['pub'].includes(ext)) { icon = 'fa-solid fa-key'; color = 'text-green-400'; }
+                        else if(['p12', 'pfx'].includes(ext)) { icon = 'fa-solid fa-lock'; color = 'text-blue-500'; }
+                        else if(['csr'].includes(ext)) { icon = 'fa-solid fa-file-signature'; color = 'text-blue-400'; }
+                        
+                        // Other
+                        else if(['map'].includes(ext)) { icon = 'fa-solid fa-map'; color = 'text-blue-400'; }
+                        else if(['lock'].includes(ext)) { icon = 'fa-solid fa-lock'; color = 'text-yellow-600'; }
+                        else if(['pid'].includes(ext)) { icon = 'fa-solid fa-hashtag'; color = 'text-gray-400'; }
+                        else if(['tmp', 'temp', 'swp', 'swo'].includes(ext)) { icon = 'fa-solid fa-clock-rotate-left'; color = 'text-gray-500'; }
+                        else if(['bak', 'backup', 'old'].includes(ext)) { icon = 'fa-solid fa-box-archive'; color = 'text-gray-500'; }
+                        else if(['diff', 'patch'].includes(ext)) { icon = 'fa-solid fa-code-compare'; color = 'text-green-400'; }
+                    %>
+                        <i class="<%= icon %> <%= color %> mr-2"></i>
+                    <% } %>
+                    <%= f.name %>
+                </td>
+                <td class="p-3 text-gray-400"><%= (f.size/1024).toFixed(1) %> KB</td>
+                <td class="p-3">
+                    <div class="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <% if(!f.isDir){ %>
+                        <button class="btn-edit w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/20 hover:bg-indigo-500 text-indigo-400 hover:text-white transition-all duration-200 hover:scale-110" title="Edit">
+                            <i class="fa-solid fa-pen-to-square text-sm"></i>
+                        </button>
+                        <% if(f.name.endsWith('.zip') || f.name.endsWith('.tar') || f.name.endsWith('.tar.gz') || f.name.endsWith('.rar') || f.name.endsWith('.7z')) { %>
+                        <button class="btn-unarchive w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white transition-all duration-200 hover:scale-110" title="Extract">
+                            <i class="fa-solid fa-box-open text-sm"></i>
+                        </button>
+                        <% } %>
+                        <% } %>
+                        <button class="btn-rename w-8 h-8 flex items-center justify-center rounded-lg bg-orange-500/20 hover:bg-orange-500 text-orange-400 hover:text-white transition-all duration-200 hover:scale-110" title="Rename">
+                            <i class="fa-solid fa-i-cursor text-sm"></i>
+                        </button>
+                        <button class="btn-delete w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white transition-all duration-200 hover:scale-110" title="Delete">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+
+<!-- Selection Action Bar -->
+<div id="selectionBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+    <div class="flex items-center gap-4 bg-[#1a1a1f]/95 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3 shadow-2xl shadow-black/50">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-check-double text-indigo-400"></i>
+            </div>
+            <span id="selectedCount" class="text-white text-sm font-bold whitespace-nowrap">0 selected</span>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="flex items-center gap-2">
+            <button id="btnArchiveSelected" class="flex items-center gap-2 bg-indigo-500/20 hover:bg-indigo-500 text-indigo-400 hover:text-white px-4 py-2 rounded-xl font-bold transition text-sm">
+                <i class="fa-solid fa-file-zipper"></i>
+                <span>Archive</span>
+            </button>
+            <button id="btnDeleteSelected" class="flex items-center gap-2 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white px-4 py-2 rounded-xl font-bold transition text-sm">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Delete</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Editor Modal -->
+<div id="edModal" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
+    <div class="w-full max-w-5xl h-[80vh] flex flex-col bg-[#1e1e1e] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+        <!-- Editor Header -->
+        <div class="flex justify-between items-center px-4 py-3 border-b border-white/10 bg-[#252526]">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <i id="edFileIcon" class="fa-solid fa-file text-gray-400"></i>
+                    <h3 id="edTitle" class="font-medium text-white font-mono text-sm">Editor</h3>
+                </div>
+                <span id="edModified" class="hidden text-xs text-yellow-500 font-medium">● Modified</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Editor Settings -->
+                <div class="hidden md:flex items-center gap-2 mr-4 text-xs text-gray-400">
+                    <select id="edFontSize" class="bg-[#3c3c3c] border border-white/10 rounded px-2 py-1 text-white text-xs cursor-pointer">
+                        <option value="12">12px</option>
+                        <option value="14" selected>14px</option>
+                        <option value="16">16px</option>
+                        <option value="18">18px</option>
+                    </select>
+                    <label class="flex items-center gap-1 cursor-pointer hover:text-white transition">
+                        <input type="checkbox" id="edWordWrap" class="accent-indigo-500 w-3 h-3" checked>
+                        <span>Wrap</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer hover:text-white transition">
+                        <input type="checkbox" id="edMinimap" class="accent-indigo-500 w-3 h-3">
+                        <span>Mini</span>
+                    </label>
+                </div>
+                <!-- Action Buttons -->
+                <button id="btnFormat" class="hidden md:flex bg-[#3c3c3c] hover:bg-[#4c4c4c] text-white px-3 py-1.5 rounded-lg text-xs font-medium transition items-center gap-1.5">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Format
+                </button>
+                <button id="btnSaveFile" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span class="hidden sm:inline">Save</span>
+                </button>
+                <button id="btnCloseEditor" class="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Editor Container -->
+        <div id="editorContainer" class="flex-1 overflow-hidden"></div>
+        
+        <!-- Editor Footer / Status Bar -->
+        <div class="flex justify-between items-center px-4 py-1.5 border-t border-white/10 bg-[#007acc] text-xs text-white">
+            <div class="flex items-center gap-4">
+                <span id="edLanguage" class="flex items-center gap-1">
+                    <i class="fa-solid fa-code text-[10px]"></i>
+                    <span>JavaScript</span>
+                </span>
+                <span id="edEncoding" class="hidden sm:inline">UTF-8</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="edCursor">Ln 1, Col 1</span>
+                <span id="edSelection" class="hidden">Sel: 0</span>
+                <span id="edFileSize" class="hidden sm:inline">0 B</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="upModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+    <div class="glass bg-[#1a1a1a] p-6 rounded-2xl w-full max-w-md border border-white/10 relative">
+        <button onclick="document.getElementById('upModal').classList.add('hidden')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-cloud-arrow-up text-blue-400"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg text-white">Upload Files</h3>
+                <p class="text-xs text-gray-500">Select or drag files to upload</p>
+            </div>
+        </div>
+        
+        <form id="uploadForm" method="POST" enctype="multipart/form-data" action="/server/<%= s.id %>/file/upload">
+            <input type="hidden" name="path" id="uploadPath" value="">
+            
+            <!-- Drop Zone -->
+            <div id="modalDropZone" class="border-2 border-dashed border-white/20 hover:border-blue-500 rounded-xl p-8 text-center transition-all cursor-pointer mb-4 relative">
+                <input type="file" name="file" id="fileInput" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <i class="fa-solid fa-file-arrow-up text-3xl text-gray-500 mb-3"></i>
+                <p class="text-sm text-gray-400 mb-1">Click to browse or drag files here</p>
+                <p class="text-xs text-gray-600">Maximum file size: 100MB</p>
+            </div>
+            
+            <!-- Selected Files Preview -->
+            <div id="selectedFiles" class="hidden mb-4 max-h-32 overflow-y-auto space-y-2"></div>
+            
+            <div class="flex gap-2">
+                <button type="submit" id="uploadBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl font-bold transition text-white text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-upload"></i>
+                    Upload
+                </button>
+                <button type="button" onclick="document.getElementById('upModal').classList.add('hidden')" class="flex-1 bg-white/10 hover:bg-white/20 py-2.5 rounded-xl font-bold transition text-gray-300 text-sm">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div id="renameModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1a1a1a] p-4 rounded-xl w-full max-w-sm flex flex-col gap-2 border border-white/10">
+        <h3 class="text-white font-bold text-sm">Rename</h3>
+        <input id="renameInput" type="text" class="bg-gray-800 text-white px-3 py-1 rounded" />
+        <div class="flex gap-2">
+            <button id="renameConfirm" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-1 rounded font-bold text-xs">Rename</button>
+            <button onclick="document.getElementById('renameModal').classList.add('hidden')" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1 rounded font-bold text-xs">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1a1a1a] p-4 rounded-xl w-full max-w-sm flex flex-col gap-2 border border-white/10">
+        <h3 class="text-white font-bold text-sm">Delete</h3>
+        <p id="deleteText" class="text-gray-300 text-sm"></p>
+        <div class="flex gap-2">
+            <button id="deleteConfirm" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-1 rounded font-bold text-xs">Delete</button>
+            <button onclick="document.getElementById('deleteModal').classList.add('hidden')" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1 rounded font-bold text-xs">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create File Modal -->
+<div id="createFileModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1a1a1a] p-6 rounded-xl w-full max-w-sm flex flex-col gap-4 border border-white/10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-600/20 flex items-center justify-center">
+                <i class="fa-solid fa-file-circle-plus text-green-400"></i>
+            </div>
+            <h3 class="text-white font-bold text-lg">New File</h3>
+        </div>
+        <div>
+            <label class="text-xs text-gray-400 font-bold mb-1 block">File Name</label>
+            <input id="newFileName" type="text" placeholder="example.js" class="w-full bg-black/50 border border-white/10 text-white px-4 py-2.5 rounded-lg focus:border-green-500 outline-none transition" />
+        </div>
+        <div class="flex gap-2 mt-2">
+            <button id="createFileConfirm" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-lg font-bold text-sm transition">Create File</button>
+            <button id="createFileCancel" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2.5 rounded-lg font-bold text-sm transition">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div id="createFolderModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1a1a1a] p-6 rounded-xl w-full max-w-sm flex flex-col gap-4 border border-white/10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center">
+                <i class="fa-solid fa-folder-plus text-purple-400"></i>
+            </div>
+            <h3 class="text-white font-bold text-lg">New Folder</h3>
+        </div>
+        <div>
+            <label class="text-xs text-gray-400 font-bold mb-1 block">Folder Name</label>
+            <input id="newFolderName" type="text" placeholder="my-folder" class="w-full bg-black/50 border border-white/10 text-white px-4 py-2.5 rounded-lg focus:border-purple-500 outline-none transition" />
+        </div>
+        <div class="flex gap-2 mt-2">
+            <button id="createFolderConfirm" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-lg font-bold text-sm transition">Create Folder</button>
+            <button id="createFolderCancel" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2.5 rounded-lg font-bold text-sm transition">Cancel</button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Monaco Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+<script>
+(function() {
+    // Variables
+    var editor = null;
+    var curFile = '';
+    var originalContent = '';
+    var isModified = false;
+    
+    // Monaco Editor configuration
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+    
+    // Language mapping
+    var languageMap = {
+        'js': 'javascript', 'mjs': 'javascript', 'cjs': 'javascript',
+        'ts': 'typescript', 'tsx': 'typescript',
+        'jsx': 'javascript',
+        'json': 'json', 'jsonc': 'json',
+        'html': 'html', 'htm': 'html',
+        'css': 'css', 'scss': 'scss', 'sass': 'scss', 'less': 'less',
+        'xml': 'xml', 'svg': 'xml',
+        'md': 'markdown', 'markdown': 'markdown',
+        'py': 'python', 'pyw': 'python',
+        'java': 'java',
+        'c': 'c', 'h': 'c',
+        'cpp': 'cpp', 'cc': 'cpp', 'cxx': 'cpp', 'hpp': 'cpp',
+        'cs': 'csharp',
+        'go': 'go',
+        'rs': 'rust',
+        'rb': 'ruby',
+        'php': 'php',
+        'swift': 'swift',
+        'kt': 'kotlin', 'kts': 'kotlin',
+        'scala': 'scala',
+        'sql': 'sql',
+        'sh': 'shell', 'bash': 'shell', 'zsh': 'shell',
+        'bat': 'bat', 'cmd': 'bat',
+        'ps1': 'powershell',
+        'yaml': 'yaml', 'yml': 'yaml',
+        'toml': 'ini',
+        'ini': 'ini', 'cfg': 'ini', 'conf': 'ini',
+        'dockerfile': 'dockerfile',
+        'lua': 'lua',
+        'r': 'r',
+        'dart': 'dart',
+        'vue': 'html',
+        'graphql': 'graphql', 'gql': 'graphql',
+        'sol': 'sol'
+    };
+    
+    function getLanguage(filename) {
+        var ext = filename.split('.').pop().toLowerCase();
+        var name = filename.toLowerCase();
+        if (name === 'dockerfile') return 'dockerfile';
+        if (name === 'makefile' || name === 'gnumakefile') return 'makefile';
+        return languageMap[ext] || 'plaintext';
+    }
+
+    // Show toast notification
+    function showToast(msg, type, duration) {
+        type = type || 'success';
+        duration = duration || 3000;
+        var container = document.getElementById('global-toast');
+        var toast = document.createElement('div');
+        toast.innerText = msg;
+        toast.className = 'px-4 py-2 rounded shadow text-sm font-bold transition-all ' + (type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white');
+        container.appendChild(toast);
+        setTimeout(function() { toast.style.opacity = 0; toast.style.transform = 'translateX(20px)'; }, duration - 500);
+        setTimeout(function() { toast.remove(); }, duration);
+    }
+
+    // Escape HTML
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Get file icon based on filename and extension
+    function getFileIcon(fileName, ext) {
+        var icon = 'fa-solid fa-file';
+        var color = 'text-gray-400';
+        
+        // Special files by exact name
+        if(fileName === 'package.json') { icon = 'fa-brands fa-npm'; color = 'text-red-500'; }
+        else if(['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-lock'; color = 'text-yellow-600'; }
+        else if(fileName === 'dockerfile' || fileName.indexOf('dockerfile.') === 0) { icon = 'fa-brands fa-docker'; color = 'text-blue-500'; }
+        else if(['docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml'].indexOf(fileName) !== -1) { icon = 'fa-brands fa-docker'; color = 'text-blue-400'; }
+        else if(fileName === '.dockerignore') { icon = 'fa-brands fa-docker'; color = 'text-gray-500'; }
+        else if(['.gitignore', '.gitattributes', '.gitmodules'].indexOf(fileName) !== -1) { icon = 'fa-brands fa-git-alt'; color = 'text-orange-500'; }
+        else if(fileName === '.env' || fileName.indexOf('.env.') === 0) { icon = 'fa-solid fa-key'; color = 'text-green-500'; }
+        else if(['license', 'license.md', 'license.txt'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-scale-balanced'; color = 'text-yellow-400'; }
+        else if(['readme.md', 'readme.txt', 'readme'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-book'; color = 'text-blue-400'; }
+        else if(['makefile', 'gnumakefile'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-gear'; color = 'text-orange-500'; }
+        else if(fileName === 'cmakelists.txt') { icon = 'fa-solid fa-gear'; color = 'text-blue-500'; }
+        else if(['cargo.toml', 'cargo.lock'].indexOf(fileName) !== -1) { icon = 'fa-brands fa-rust'; color = 'text-orange-600'; }
+        else if(['go.mod', 'go.sum'].indexOf(fileName) !== -1) { icon = 'fa-brands fa-golang'; color = 'text-cyan-500'; }
+        else if(['requirements.txt', 'pipfile', 'pyproject.toml', 'setup.py'].indexOf(fileName) !== -1) { icon = 'fa-brands fa-python'; color = 'text-yellow-300'; }
+        else if(['composer.json', 'composer.lock'].indexOf(fileName) !== -1) { icon = 'fa-brands fa-php'; color = 'text-indigo-400'; }
+        else if(['tsconfig.json', 'jsconfig.json'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-gear'; color = 'text-blue-500'; }
+        else if(['webpack.config.js', 'webpack.config.ts'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-cube'; color = 'text-blue-400'; }
+        else if(['vite.config.js', 'vite.config.ts'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-bolt'; color = 'text-purple-500'; }
+        else if(['.eslintrc', '.eslintrc.js', '.eslintrc.json', 'eslint.config.js'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-spell-check'; color = 'text-purple-500'; }
+        else if(['.prettierrc', 'prettier.config.js'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-wand-magic-sparkles'; color = 'text-pink-400'; }
+        else if(fileName === '.editorconfig') { icon = 'fa-solid fa-sliders'; color = 'text-gray-400'; }
+        else if(fileName === '.htaccess') { icon = 'fa-solid fa-server'; color = 'text-green-600'; }
+        else if(fileName === 'nginx.conf') { icon = 'fa-solid fa-server'; color = 'text-green-500'; }
+        else if(fileName === 'procfile') { icon = 'fa-solid fa-server'; color = 'text-purple-500'; }
+        else if(['vercel.json', 'now.json'].indexOf(fileName) !== -1) { icon = 'fa-solid fa-triangle'; color = 'text-white'; }
+        else if(fileName === 'netlify.toml') { icon = 'fa-solid fa-globe'; color = 'text-teal-400'; }
+        else if(fileName === '.gitlab-ci.yml') { icon = 'fa-brands fa-gitlab'; color = 'text-orange-500'; }
+        
+        // JavaScript / TypeScript / Node
+        else if(['js', 'mjs', 'cjs'].indexOf(ext) !== -1) { icon = 'fa-brands fa-js'; color = 'text-yellow-400'; }
+        else if(['ts'].indexOf(ext) !== -1) { icon = 'fa-solid fa-code'; color = 'text-blue-500'; }
+        else if(['tsx'].indexOf(ext) !== -1) { icon = 'fa-brands fa-react'; color = 'text-blue-400'; }
+        else if(['jsx'].indexOf(ext) !== -1) { icon = 'fa-brands fa-react'; color = 'text-cyan-400'; }
+        else if(['vue'].indexOf(ext) !== -1) { icon = 'fa-brands fa-vuejs'; color = 'text-green-500'; }
+        else if(['svelte'].indexOf(ext) !== -1) { icon = 'fa-solid fa-fire'; color = 'text-orange-500'; }
+        
+        // Web
+        else if(['html', 'htm', 'xhtml'].indexOf(ext) !== -1) { icon = 'fa-brands fa-html5'; color = 'text-orange-500'; }
+        else if(['css'].indexOf(ext) !== -1) { icon = 'fa-brands fa-css3-alt'; color = 'text-blue-400'; }
+        else if(['scss', 'sass'].indexOf(ext) !== -1) { icon = 'fa-brands fa-sass'; color = 'text-pink-400'; }
+        else if(['less'].indexOf(ext) !== -1) { icon = 'fa-brands fa-less'; color = 'text-blue-600'; }
+        
+        // Programming Languages
+        else if(['py', 'pyw', 'pyx'].indexOf(ext) !== -1) { icon = 'fa-brands fa-python'; color = 'text-yellow-300'; }
+        else if(['ipynb'].indexOf(ext) !== -1) { icon = 'fa-solid fa-book-open'; color = 'text-orange-400'; }
+        else if(['java'].indexOf(ext) !== -1) { icon = 'fa-brands fa-java'; color = 'text-red-400'; }
+        else if(['jar', 'war', 'ear'].indexOf(ext) !== -1) { icon = 'fa-brands fa-java'; color = 'text-red-600'; }
+        else if(['class'].indexOf(ext) !== -1) { icon = 'fa-brands fa-java'; color = 'text-red-500'; }
+        else if(['kt', 'kts'].indexOf(ext) !== -1) { icon = 'fa-solid fa-k'; color = 'text-purple-500'; }
+        else if(['php', 'phtml'].indexOf(ext) !== -1) { icon = 'fa-brands fa-php'; color = 'text-indigo-400'; }
+        else if(['rb', 'erb', 'rake'].indexOf(ext) !== -1) { icon = 'fa-solid fa-gem'; color = 'text-red-500'; }
+        else if(['go'].indexOf(ext) !== -1) { icon = 'fa-brands fa-golang'; color = 'text-cyan-500'; }
+        else if(['rs'].indexOf(ext) !== -1) { icon = 'fa-brands fa-rust'; color = 'text-orange-600'; }
+        else if(['c'].indexOf(ext) !== -1) { icon = 'fa-solid fa-c'; color = 'text-blue-600'; }
+        else if(['h'].indexOf(ext) !== -1) { icon = 'fa-solid fa-h'; color = 'text-blue-500'; }
+        else if(['cpp', 'cc', 'cxx'].indexOf(ext) !== -1) { icon = 'fa-solid fa-c'; color = 'text-blue-500'; }
+        else if(['hpp', 'hh', 'hxx'].indexOf(ext) !== -1) { icon = 'fa-solid fa-h'; color = 'text-blue-400'; }
+        else if(['cs'].indexOf(ext) !== -1) { icon = 'fa-solid fa-hashtag'; color = 'text-purple-500'; }
+        else if(['swift'].indexOf(ext) !== -1) { icon = 'fa-brands fa-swift'; color = 'text-orange-500'; }
+        else if(['dart'].indexOf(ext) !== -1) { icon = 'fa-solid fa-bullseye'; color = 'text-blue-400'; }
+        else if(['lua'].indexOf(ext) !== -1) { icon = 'fa-solid fa-moon'; color = 'text-blue-500'; }
+        else if(['r'].indexOf(ext) !== -1) { icon = 'fa-brands fa-r-project'; color = 'text-blue-500'; }
+        else if(['jl'].indexOf(ext) !== -1) { icon = 'fa-solid fa-circle-dot'; color = 'text-purple-500'; }
+        else if(['ex', 'exs'].indexOf(ext) !== -1) { icon = 'fa-solid fa-droplet'; color = 'text-purple-400'; }
+        else if(['sol'].indexOf(ext) !== -1) { icon = 'fa-brands fa-ethereum'; color = 'text-gray-400'; }
+        
+        // Shell & Scripts
+        else if(['sh', 'bash', 'zsh', 'fish'].indexOf(ext) !== -1) { icon = 'fa-solid fa-terminal'; color = 'text-green-400'; }
+        else if(['bat', 'cmd'].indexOf(ext) !== -1) { icon = 'fa-brands fa-windows'; color = 'text-blue-400'; }
+        else if(['ps1', 'psm1'].indexOf(ext) !== -1) { icon = 'fa-solid fa-terminal'; color = 'text-blue-500'; }
+        
+        // Data & Config
+        else if(['json', 'jsonc', 'json5'].indexOf(ext) !== -1) { icon = 'fa-solid fa-brackets-curly'; color = 'text-yellow-500'; }
+        else if(['xml'].indexOf(ext) !== -1) { icon = 'fa-solid fa-code'; color = 'text-orange-400'; }
+        else if(['yaml', 'yml'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-code'; color = 'text-red-400'; }
+        else if(['toml'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-code'; color = 'text-gray-500'; }
+        else if(['ini', 'cfg', 'conf', 'config'].indexOf(ext) !== -1) { icon = 'fa-solid fa-gear'; color = 'text-gray-400'; }
+        else if(['env'].indexOf(ext) !== -1) { icon = 'fa-solid fa-key'; color = 'text-green-500'; }
+        else if(['csv'].indexOf(ext) !== -1) { icon = 'fa-solid fa-table'; color = 'text-green-500'; }
+        else if(['graphql', 'gql'].indexOf(ext) !== -1) { icon = 'fa-solid fa-diagram-project'; color = 'text-pink-500'; }
+        
+        // Documents
+        else if(['md', 'markdown', 'mdown'].indexOf(ext) !== -1) { icon = 'fa-brands fa-markdown'; color = 'text-white'; }
+        else if(['mdx'].indexOf(ext) !== -1) { icon = 'fa-brands fa-markdown'; color = 'text-yellow-400'; }
+        else if(['txt', 'text'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-lines'; color = 'text-gray-400'; }
+        else if(['log'].indexOf(ext) !== -1) { icon = 'fa-solid fa-scroll'; color = 'text-gray-500'; }
+        else if(['pdf'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-pdf'; color = 'text-red-500'; }
+        else if(['doc', 'docx'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-word'; color = 'text-blue-600'; }
+        else if(['xls', 'xlsx'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-excel'; color = 'text-green-600'; }
+        else if(['ppt', 'pptx'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-powerpoint'; color = 'text-orange-500'; }
+        else if(['tex', 'latex'].indexOf(ext) !== -1) { icon = 'fa-solid fa-square-root-variable'; color = 'text-green-600'; }
+        
+        // Images
+        else if(['png'].indexOf(ext) !== -1) { icon = 'fa-solid fa-image'; color = 'text-purple-400'; }
+        else if(['jpg', 'jpeg'].indexOf(ext) !== -1) { icon = 'fa-solid fa-image'; color = 'text-orange-400'; }
+        else if(['gif'].indexOf(ext) !== -1) { icon = 'fa-solid fa-image'; color = 'text-green-400'; }
+        else if(['webp'].indexOf(ext) !== -1) { icon = 'fa-solid fa-image'; color = 'text-blue-400'; }
+        else if(['svg'].indexOf(ext) !== -1) { icon = 'fa-solid fa-bezier-curve'; color = 'text-yellow-500'; }
+        else if(['ico', 'icns'].indexOf(ext) !== -1) { icon = 'fa-solid fa-icons'; color = 'text-blue-500'; }
+        else if(['bmp', 'tiff', 'tif'].indexOf(ext) !== -1) { icon = 'fa-solid fa-image'; color = 'text-gray-400'; }
+        else if(['psd'].indexOf(ext) !== -1) { icon = 'fa-solid fa-image'; color = 'text-blue-600'; }
+        else if(['ai'].indexOf(ext) !== -1) { icon = 'fa-solid fa-bezier-curve'; color = 'text-orange-600'; }
+        else if(['fig', 'figma'].indexOf(ext) !== -1) { icon = 'fa-brands fa-figma'; color = 'text-purple-500'; }
+        
+        // Archives
+        else if(['zip'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-yellow-600'; }
+        else if(['rar'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-purple-500'; }
+        else if(['7z'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-green-500'; }
+        else if(['tar'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-orange-500'; }
+        else if(['gz', 'gzip'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-red-400'; }
+        else if(['tgz'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-orange-400'; }
+        else if(['bz2'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-yellow-500'; }
+        else if(['xz'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-zipper'; color = 'text-blue-500'; }
+        else if(['iso'].indexOf(ext) !== -1) { icon = 'fa-solid fa-compact-disc'; color = 'text-blue-500'; }
+        else if(['dmg'].indexOf(ext) !== -1) { icon = 'fa-brands fa-apple'; color = 'text-gray-400'; }
+        else if(['deb'].indexOf(ext) !== -1) { icon = 'fa-brands fa-debian'; color = 'text-red-500'; }
+        else if(['rpm'].indexOf(ext) !== -1) { icon = 'fa-brands fa-redhat'; color = 'text-red-600'; }
+        else if(['apk'].indexOf(ext) !== -1) { icon = 'fa-brands fa-android'; color = 'text-green-500'; }
+        
+        // Audio
+        else if(['mp3'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-audio'; color = 'text-pink-400'; }
+        else if(['wav'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-audio'; color = 'text-blue-400'; }
+        else if(['ogg', 'oga'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-audio'; color = 'text-orange-400'; }
+        else if(['flac'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-audio'; color = 'text-yellow-500'; }
+        else if(['aac', 'm4a'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-audio'; color = 'text-purple-400'; }
+        else if(['mid', 'midi'].indexOf(ext) !== -1) { icon = 'fa-solid fa-music'; color = 'text-green-400'; }
+        
+        // Video
+        else if(['mp4', 'm4v'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-red-400'; }
+        else if(['avi'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-blue-500'; }
+        else if(['mkv'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-green-500'; }
+        else if(['mov'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-gray-400'; }
+        else if(['webm'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-green-400'; }
+        else if(['wmv'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-blue-400'; }
+        else if(['flv'].indexOf(ext) !== -1) { icon = 'fa-solid fa-file-video'; color = 'text-red-500'; }
+        
+        // Fonts
+        else if(['ttf', 'otf'].indexOf(ext) !== -1) { icon = 'fa-solid fa-font'; color = 'text-gray-400'; }
+        else if(['woff', 'woff2'].indexOf(ext) !== -1) { icon = 'fa-solid fa-font'; color = 'text-purple-400'; }
+        else if(['eot'].indexOf(ext) !== -1) { icon = 'fa-solid fa-font'; color = 'text-blue-500'; }
+        
+        // Database
+        else if(['sql'].indexOf(ext) !== -1) { icon = 'fa-solid fa-database'; color = 'text-blue-400'; }
+        else if(['db', 'sqlite', 'sqlite3'].indexOf(ext) !== -1) { icon = 'fa-solid fa-database'; color = 'text-blue-500'; }
+        
+        // 3D & CAD
+        else if(['obj', 'fbx', 'gltf', 'glb'].indexOf(ext) !== -1) { icon = 'fa-solid fa-cube'; color = 'text-orange-400'; }
+        else if(['stl'].indexOf(ext) !== -1) { icon = 'fa-solid fa-cube'; color = 'text-gray-400'; }
+        else if(['blend'].indexOf(ext) !== -1) { icon = 'fa-solid fa-cube'; color = 'text-orange-500'; }
+        
+        // Executables & Binaries
+        else if(['exe', 'msi'].indexOf(ext) !== -1) { icon = 'fa-brands fa-windows'; color = 'text-blue-500'; }
+        else if(['dll', 'so', 'dylib'].indexOf(ext) !== -1) { icon = 'fa-solid fa-gear'; color = 'text-gray-400'; }
+        else if(['app'].indexOf(ext) !== -1) { icon = 'fa-brands fa-apple'; color = 'text-gray-400'; }
+        else if(['bin', 'out'].indexOf(ext) !== -1) { icon = 'fa-solid fa-microchip'; color = 'text-gray-500'; }
+        
+        // Certificates & Keys
+        else if(['pem', 'crt', 'cer', 'der'].indexOf(ext) !== -1) { icon = 'fa-solid fa-certificate'; color = 'text-green-500'; }
+        else if(['key'].indexOf(ext) !== -1) { icon = 'fa-solid fa-key'; color = 'text-yellow-500'; }
+        else if(['pub'].indexOf(ext) !== -1) { icon = 'fa-solid fa-key'; color = 'text-green-400'; }
+        else if(['p12', 'pfx'].indexOf(ext) !== -1) { icon = 'fa-solid fa-lock'; color = 'text-blue-500'; }
+        
+        // Other
+        else if(['lock'].indexOf(ext) !== -1) { icon = 'fa-solid fa-lock'; color = 'text-yellow-600'; }
+        else if(['tmp', 'temp', 'swp'].indexOf(ext) !== -1) { icon = 'fa-solid fa-clock-rotate-left'; color = 'text-gray-500'; }
+        else if(['bak', 'backup', 'old'].indexOf(ext) !== -1) { icon = 'fa-solid fa-box-archive'; color = 'text-gray-500'; }
+        else if(['diff', 'patch'].indexOf(ext) !== -1) { icon = 'fa-solid fa-code-compare'; color = 'text-green-400'; }
+        
+        return { icon: icon, color: color };
+    }
+
+    // Render files table
+    function renderFiles(files) {
+        var tbody = document.getElementById('fileTableBody');
+        if (!tbody) return;
+        
+        var html = '';
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            var safeName = escapeHtml(f.name);
+            html += '<tr class="border-b border-white/5 hover:bg-white/5 transition file-row group" data-name="' + encodeURIComponent(f.name) + '" data-isdir="' + f.isDir + '">';
+            html += '<td class="p-3"><input type="checkbox" class="file-checkbox w-4 h-4 rounded cursor-pointer accent-yellow-500" data-name="' + encodeURIComponent(f.name) + '"></td>';
+            html += '<td class="p-3 cursor-pointer file-name" dir="auto">';
+            if (f.isDir) {
+                html += '<i class="fa-solid fa-folder text-yellow-500 mr-2"></i>';
+            } else {
+                var ext = f.name.split('.').pop().toLowerCase();
+                var fileName = f.name.toLowerCase();
+                var iconData = getFileIcon(fileName, ext);
+                html += '<i class="' + iconData.icon + ' ' + iconData.color + ' mr-2"></i>';
+            }
+            html += safeName;
+            html += '</td>';
+            html += '<td class="p-3 text-gray-400">' + (f.size/1024).toFixed(1) + ' KB</td>';
+            html += '<td class="p-3"><div class="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">';
+            if (!f.isDir) {
+                html += '<button class="btn-edit w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/20 hover:bg-indigo-500 text-indigo-400 hover:text-white transition-all duration-200 hover:scale-110" title="Edit"><i class="fa-solid fa-pen-to-square text-sm"></i></button>';
+                // Check if file is an archive
+                var isArchive = f.name.endsWith('.zip') || f.name.endsWith('.tar') || f.name.endsWith('.tar.gz') || f.name.endsWith('.rar') || f.name.endsWith('.7z');
+                if (isArchive) {
+                    html += '<button class="btn-unarchive w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white transition-all duration-200 hover:scale-110" title="Extract"><i class="fa-solid fa-box-open text-sm"></i></button>';
+                }
+            }
+            html += '<button class="btn-rename w-8 h-8 flex items-center justify-center rounded-lg bg-orange-500/20 hover:bg-orange-500 text-orange-400 hover:text-white transition-all duration-200 hover:scale-110" title="Rename"><i class="fa-solid fa-i-cursor text-sm"></i></button>';
+            html += '<button class="btn-delete w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white transition-all duration-200 hover:scale-110" title="Delete"><i class="fa-solid fa-trash-can text-sm"></i></button>';
+            html += '</div></td></tr>';
+        }
+        tbody.innerHTML = html;
+        attachRowEvents();
+        attachCheckboxEvents();
+        updateSelectAllState();
+    }
+    
+    // Update selection count and button visibility
+    function updateSelectionUI() {
+        var count = document.querySelectorAll('.file-checkbox:checked').length;
+        var bar = document.getElementById('selectionBar');
+        var countSpan = document.getElementById('selectedCount');
+
+        if (count > 0) {
+            bar.classList.remove('hidden');
+            countSpan.textContent = count + ' item' + (count > 1 ? 's' : '') + ' selected';
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+
+    
+    // Update select all checkbox state
+    function updateSelectAllState() {
+        var allCheckboxes = document.querySelectorAll('.file-checkbox');
+        var checkedCheckboxes = document.querySelectorAll('.file-checkbox:checked');
+        var selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        
+        if (allCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+        
+        updateSelectionUI();
+    }
+    
+    // Attach checkbox events
+    function attachCheckboxEvents() {
+        var checkboxes = document.querySelectorAll('.file-checkbox');
+        checkboxes.forEach(function(cb) {
+            cb.onclick = function(e) {
+                e.stopPropagation();
+                updateSelectAllState();
+            };
+        });
+    }
+    
+    // Select all files
+    function selectAllFiles() {
+        var checkboxes = document.querySelectorAll('.file-checkbox');
+        var allChecked = document.querySelectorAll('.file-checkbox:checked').length === checkboxes.length;
+        
+        checkboxes.forEach(function(cb) {
+            cb.checked = !allChecked;
+        });
+        
+        updateSelectAllState();
+    }
+    
+    // Delete selected files
+    function deleteSelectedFiles() {
+        var checkboxes = document.querySelectorAll('.file-checkbox:checked');
+        if (checkboxes.length === 0) return;
+        
+        var files = [];
+        checkboxes.forEach(function(cb) {
+            files.push(decodeURIComponent(cb.getAttribute('data-name')));
+        });
+        
+        if (!confirm('Are you sure you want to delete ' + files.length + ' file(s)?')) return;
+        
+        var deletePromises = files.map(function(file) {
+            return fetch('/server/<%= s.id %>/file/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ file: file, path: currentPath })
+            });
+        });
+        
+        Promise.all(deletePromises)
+            .then(function() {
+                showToast('Deleted ' + files.length + ' file(s)');
+                loadFiles(currentPath);
+            })
+            .catch(function() {
+                showToast('Some files failed to delete', 'error');
+                loadFiles(currentPath);
+            });
+    }
+
+    // Archive selected files
+    function archiveSelectedFiles() {
+        var checkboxes = document.querySelectorAll('.file-checkbox:checked');
+        if (checkboxes.length === 0) return;
+        
+        var files = [];
+        checkboxes.forEach(function(cb) {
+            files.push(decodeURIComponent(cb.getAttribute('data-name')));
+        });
+        
+        var archiveName = prompt('Enter archive name:', 'archive.tar.gz');
+        if (!archiveName) return;
+        
+        showToast('Creating archive...', 'success', 5000);
+        
+        fetch('/server/<%= s.id %>/file/compress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ 
+                files: files, 
+                path: currentPath,
+                archiveName: archiveName
+            })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                showToast('Archive created: ' + archiveName);
+                loadFiles(currentPath);
+            }
+        })
+        .catch(function() {
+            showToast('Failed to create archive', 'error');
+        });
+    }
+
+    // Load files from API
+let currentPath = ''; // معرف مرة واحدة، قابل للتغيير
+
+function loadFiles(relPath) {
+    // relPath يجب أن يكون نسبي فقط
+    const url = relPath
+        ? `/server/<%= s.id %>/api/files/${relPath}`
+        : `/server/<%= s.id %>/api/files/${relPath}`;
+    
+    fetch(url, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { 
+                showToast(data.error, 'error'); 
+                return; 
+            }
+            renderFiles(data.files);
+            currentPath = relPath || ''; // تحديث المسار النسبي
+            document.getElementById('currentPath').innerText = '/home/container' + (currentPath ? '/' + currentPath : '');
+        })
+        .catch(err => {
+            console.error('Load files error:', err);
+            showToast('Failed to load files', 'error');
+        });
+}
+
+// دخول مجلد
+function enterFolder(name) {
+    const newPath = currentPath ? currentPath + '/' + name : name;
+    loadFiles(newPath);
+}
+
+// العودة للخلف
+function goBack() {
+    if (!currentPath) return;
+    const parts = currentPath.split('/');
+    parts.pop();
+    loadFiles(parts.join('/'));
+}
+
+
+
+    // Open create file modal
+    function openCreateFileModal() {
+        var modal = document.getElementById('createFileModal');
+        var input = document.getElementById('newFileName');
+        modal.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+    }
+
+    // Open create folder modal
+    function openCreateFolderModal() {
+        var modal = document.getElementById('createFolderModal');
+        var input = document.getElementById('newFolderName');
+        modal.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+    }
+
+    // Create file
+// Create file
+function createFile(name) {
+    if (!name) return;
+
+    fetch('/server/<%= s.id %>/file/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ 
+            name: name, 
+            type: 'file', 
+            path:  currentPath ||'', // المسار النسبي داخل السيرفر، فارغ إذا الجذر
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) { 
+            showToast(data.error, 'error'); 
+            return; 
+        }
+        showToast('File created', 'success');
+        // إعادة تحميل الملفات في نفس المسار
+        loadFiles(currentPath);
+        // إخفاء المودال
+        document.getElementById('createFileModal').classList.add('hidden');
+    })
+    .catch(err => { 
+        console.error('Create file error:', err);
+        showToast('Failed to create file', 'error'); 
+    });
+}
+
+
+    // Create folder
+    function createFolder(name) {
+        if (!name) return;
+        
+        fetch('/server/<%= s.id %>/file/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ name: name, type: 'folder', path: currentPath })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) { 
+                showToast(data.error, 'error'); 
+                return; 
+            }
+            showToast('Folder created');
+            loadFiles(currentPath);
+            document.getElementById('createFolderModal').classList.add('hidden');
+        })
+    }
+
+    // Fetch file content for editing
+    function fetchContent(f) {
+        curFile = f;
+        document.getElementById('edTitle').innerText = f;
+        
+        // Update file icon in editor
+        var iconData = getFileIcon(f.toLowerCase(), f.split('.').pop().toLowerCase());
+        document.getElementById('edFileIcon').className = iconData.icon + ' ' + iconData.color;
+        
+        // Update language display
+        var lang = getLanguage(f);
+        document.getElementById('edLanguage').innerHTML = '<i class="fa-solid fa-code"></i> <span>' + lang.charAt(0).toUpperCase() + lang.slice(1) + '</span>';
+
+        fetch('/server/<%= s.id %>/file/read', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ 
+                path: currentPath,
+                file: f
+            })
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+        })
+        .then(t => {
+            originalContent = t;
+            isModified = false;
+            document.getElementById('edModified').classList.add('hidden');
+            
+            // Update file size
+            var size = new Blob([t]).size;
+            document.getElementById('edFileSize').innerText = formatFileSize(size);
+            
+            if (editor) {
+                var lang = getLanguage(f);
+                monaco.editor.setModelLanguage(editor.getModel(), lang);
+                editor.setValue(t);
+                document.getElementById('edModal').classList.remove('hidden');
+                setTimeout(() => editor.layout(), 100);
+            }
+        })
+        .catch(err => { 
+            console.error('Fetch error:', err);
+            showToast('Failed to load file', 'error'); 
+        });
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' bytes';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    // Save file
+    function saveFile() {
+        if (!editor) return;
+        
+        var content = editor.getValue();
+        
+        fetch('/server/<%= s.id %>/file/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ file: curFile, content: content, path: currentPath })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function() {
+            showToast('Saved!');
+            originalContent = content;
+            isModified = false;
+            document.getElementById('edModified').classList.add('hidden');
+        })
+        .catch(function() { showToast('Failed to save', 'error'); });
+    }
+    
+    // Close editor
+    function closeEditor() {
+        if (isModified) {
+            if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+                return;
+            }
+        }
+        document.getElementById('edModal').classList.add('hidden');
+    }
+    
+    // Format code
+    function formatCode() {
+        if (editor) {
+            editor.getAction('editor.action.formatDocument').run();
+        }
+    }
+
+    // Open rename modal
+    function openRenameModal(oldName) {
+        var modal = document.getElementById('renameModal');
+        var input = document.getElementById('renameInput');
+        modal.classList.remove('hidden');
+        input.value = oldName;
+        input.focus();
+        
+        document.getElementById('renameConfirm').onclick = function() {
+            var n = input.value.trim();
+            if (n && n !== oldName) {
+                fetch('/server/<%= s.id %>/file/rename', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ oldName: oldName, newName: n, path: currentPath })
+                })
+                .then(function() {
+                    showToast('Renamed ' + oldName + ' to ' + n);
+                    loadFiles(currentPath);
+                })
+                .catch(function() { showToast('Rename failed', 'error'); });
+            }
+            modal.classList.add('hidden');
+        };
+    }
+
+    // Open delete modal
+    function openDeleteModal(name, isDir) {
+        var modal = document.getElementById('deleteModal');
+        document.getElementById('deleteText').innerText = 'Delete "' + name + '"?';
+        modal.classList.remove('hidden');
+        
+        document.getElementById('deleteConfirm').onclick = function() {
+            fetch('/server/<%= s.id %>/file/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ file: name, path:  currentPath })
+            })
+            .then(function() {
+                showToast('Deleted ' + name);
+                loadFiles(currentPath);
+            })
+            .catch(function() { showToast('Delete failed', 'error'); });
+            modal.classList.add('hidden');
+        };
+    }
+
+    // Attach events to file rows
+    function attachRowEvents() {
+        var rows = document.querySelectorAll('.file-row');
+        rows.forEach(function(row) {
+            var name = decodeURIComponent(row.getAttribute('data-name'));
+            var isDir = row.getAttribute('data-isdir') === 'true';
+            
+            // Click on file name
+            var nameCell = row.querySelector('.file-name');
+            if (nameCell) {
+                nameCell.onclick = function() {
+                    if (isDir) {
+                        enterFolder(name);
+                    } else {
+                        fetchContent(name);
+                    }
+                };
+            }
+            
+            // Edit button
+            var editBtn = row.querySelector('.btn-edit');
+            if (editBtn) {
+                editBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    fetchContent(name);
+                };
+            }
+            
+            // Rename button
+            var renameBtn = row.querySelector('.btn-rename');
+            if (renameBtn) {
+                renameBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    openRenameModal(name);
+                };
+            }
+            
+            // Delete button
+            var deleteBtn = row.querySelector('.btn-delete');
+            if (deleteBtn) {
+                deleteBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    openDeleteModal(name, isDir);
+                };
+            }
+            
+            // Unarchive button
+            var unarchiveBtn = row.querySelector('.btn-unarchive');
+            if (unarchiveBtn) {
+                unarchiveBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    unarchiveFile(name);
+                };
+            }
+        });
+    }
+    
+    // Unarchive file function
+    function unarchiveFile(fileName) {
+        if (!confirm('Are you sure you want to extract "' + fileName + '"?')) return;
+        
+        showToast('Extracting...', 'success', 2000);
+        
+        fetch('/server/<%= s.id %>/file/unarchive', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ file: fileName, path: currentPath })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                showToast('Extracted successfully!');
+                loadFiles(currentPath);
+            } else {
+                showToast(data.error || 'Failed to extract', 'error');
+            }
+        })
+        .catch(function(err) {
+            showToast('Failed to extract: ' + err.message, 'error');
+        });
+    }
+
+    // Initialize when DOM is ready
+    function init() {
+        // Initialize Monaco Editor
+        require(['vs/editor/editor.main'], function() {
+            // Define custom dark theme
+            monaco.editor.defineTheme('xeo-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'comment', foreground: '6A9955' },
+                    { token: 'keyword', foreground: 'C586C0' },
+                    { token: 'string', foreground: 'CE9178' },
+                    { token: 'number', foreground: 'B5CEA8' },
+                    { token: 'type', foreground: '4EC9B0' },
+                ],
+                colors: {
+                    'editor.background': '#1e1e1e',
+                    'editor.foreground': '#d4d4d4',
+                    'editor.lineHighlightBackground': '#2d2d2d',
+                    'editorLineNumber.foreground': '#858585',
+                    'editorLineNumber.activeForeground': '#c6c6c6',
+                    'editor.selectionBackground': '#264f78',
+                    'editor.inactiveSelectionBackground': '#3a3d41',
+                    'editorCursor.foreground': '#aeafad',
+                    'editorWhitespace.foreground': '#3b3b3b'
+                }
+            });
+            
+            editor = monaco.editor.create(document.getElementById('editorContainer'), {
+                value: '',
+                language: 'javascript',
+                theme: 'xeo-dark',
+                fontSize: 14,
+                fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+                fontLigatures: true,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                tabSize: 2,
+                insertSpaces: true,
+                renderWhitespace: 'selection',
+                bracketPairColorization: { enabled: true },
+                guides: {
+                    bracketPairs: true,
+                    indentation: true
+                },
+                smoothScrolling: true,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                padding: { top: 10, bottom: 10 },
+                suggest: {
+                    showKeywords: true,
+                    showSnippets: true
+                },
+                quickSuggestions: true,
+                parameterHints: { enabled: true },
+                folding: true,
+                foldingHighlight: true,
+                showFoldingControls: 'mouseover',
+                matchBrackets: 'always',
+                renderLineHighlight: 'all',
+                scrollbar: {
+                    verticalScrollbarSize: 10,
+                    horizontalScrollbarSize: 10
+                }
+            });
+            
+            // Track content changes
+            editor.onDidChangeModelContent(function() {
+                var currentContent = editor.getValue();
+                isModified = currentContent !== originalContent;
+                if (isModified) {
+                    document.getElementById('edModified').classList.remove('hidden');
+                } else {
+                    document.getElementById('edModified').classList.add('hidden');
+                }
+            });
+            
+            // Track cursor position
+            editor.onDidChangeCursorPosition(function(e) {
+                document.getElementById('edCursor').innerText = 'Ln ' + e.position.lineNumber + ', Col ' + e.position.column;
+            });
+            
+            // Track selection
+            editor.onDidChangeCursorSelection(function(e) {
+                var selection = editor.getSelection();
+                var selectedText = editor.getModel().getValueInRange(selection);
+                if (selectedText.length > 0) {
+                    document.getElementById('edSelection').classList.remove('hidden');
+                    document.getElementById('edSelection').innerText = 'Selected: ' + selectedText.length;
+                } else {
+                    document.getElementById('edSelection').classList.add('hidden');
+                }
+            });
+            
+            // Keyboard shortcuts
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                saveFile();
+            });
+            
+            // Font size change
+            document.getElementById('edFontSize').onchange = function() {
+                editor.updateOptions({ fontSize: parseInt(this.value) });
+            };
+            
+            // Word wrap toggle
+            document.getElementById('edWordWrap').onchange = function() {
+                editor.updateOptions({ wordWrap: this.checked ? 'on' : 'off' });
+            };
+            
+            // Minimap toggle
+            document.getElementById('edMinimap').onchange = function() {
+                editor.updateOptions({ minimap: { enabled: this.checked } });
+            };
+        });
+
+        // Button events
+        document.getElementById('btnGoBack').onclick = goBack;
+        document.getElementById('btnUpload').onclick = function() {
+            document.getElementById('uploadPath').value = currentPath;
+            document.getElementById('upModal').classList.remove('hidden');
+        };
+        document.getElementById('btnNewFile').onclick = openCreateFileModal;
+        document.getElementById('btnNewFolder').onclick = openCreateFolderModal;
+        
+        // Select All button
+        var selectAllCb = document.getElementById('selectAllCheckbox');
+        if (selectAllCb) {
+            selectAllCb.onclick = selectAllFiles;
+        }
+        
+        // Delete Selected button
+        document.getElementById('btnDeleteSelected').onclick = deleteSelectedFiles;
+        
+        // Archive Selected button
+        document.getElementById('btnArchiveSelected').onclick = archiveSelectedFiles;
+        
+        // Editor buttons
+        document.getElementById('btnSaveFile').onclick = saveFile;
+        document.getElementById('btnCloseEditor').onclick = closeEditor;
+        document.getElementById('btnFormat').onclick = formatCode;
+        
+        // Escape key to close editor
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !document.getElementById('edModal').classList.contains('hidden')) {
+                closeEditor();
+            }
+        });
+
+        // Create File Modal events
+        document.getElementById('createFileConfirm').onclick = function() {
+            var name = document.getElementById('newFileName').value.trim();
+            if (name) createFile(name);
+        };
+        document.getElementById('createFileCancel').onclick = function() {
+            document.getElementById('createFileModal').classList.add('hidden');
+        };
+        document.getElementById('newFileName').onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                var name = this.value.trim();
+                if (name) createFile(name);
+            }
+        };
+
+        // Create Folder Modal events
+        document.getElementById('createFolderConfirm').onclick = function() {
+            var name = document.getElementById('newFolderName').value.trim();
+            if (name) createFolder(name);
+        };
+        document.getElementById('createFolderCancel').onclick = function() {
+            document.getElementById('createFolderModal').classList.add('hidden');
+        };
+        document.getElementById('newFolderName').onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                var name = this.value.trim();
+                if (name) createFolder(name);
+            }
+        };
+
+        // Upload form
+        var uploadForm = document.getElementById('uploadForm');
+        if (uploadForm) {
+            uploadForm.onsubmit = function(e) {
+                e.preventDefault();
+                var data = new FormData(this);
+                data.append('path', currentPath);
+                
+                fetch(this.action, { method: 'POST', body: data })
+                    .then(function(res) {
+                        if (!res.ok) throw new Error('Upload failed');
+                        return res.text();
+                    })
+                    .then(function() {
+                        showToast('Uploaded!');
+                        loadFiles(currentPath);
+                        document.getElementById('upModal').classList.add('hidden');
+                    })
+                    .catch(function() { showToast('Upload failed', 'error'); });
+            };
+        }
+
+        // Cancel buttons for modals
+        var cancelUpload = document.querySelector('#upModal button[type="button"]');
+        if (cancelUpload) {
+            cancelUpload.onclick = function() {
+                document.getElementById('upModal').classList.add('hidden');
+            };
+        }
+
+        var cancelRename = document.querySelector('#renameModal .bg-gray-700');
+        if (cancelRename) {
+            cancelRename.onclick = function() {
+                document.getElementById('renameModal').classList.add('hidden');
+            };
+        }
+
+        var cancelDelete = document.querySelector('#deleteModal .bg-gray-700');
+        if (cancelDelete) {
+            cancelDelete.onclick = function() {
+                document.getElementById('deleteModal').classList.add('hidden');
+            };
+        }
+
+        // Attach events to initial file rows
+        attachRowEvents();
+        attachCheckboxEvents();
+        updateSelectAllState();
+        
+    }
+
+    // Run init when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // ========== DRAG & DROP UPLOAD ==========
+    var dropOverlay = document.getElementById('dropOverlay');
+    var dragCounter = 0;
+
+    // Prevent default drag behaviors on window
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+        document.body.addEventListener(eventName, function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    // Show overlay when dragging files over the page
+    document.body.addEventListener('dragenter', function(e) {
+        dragCounter++;
+        if (e.dataTransfer.types.includes('Files')) {
+            dropOverlay.classList.remove('hidden');
+        }
+    });
+
+    document.body.addEventListener('dragleave', function(e) {
+        dragCounter--;
+        if (dragCounter === 0) {
+            dropOverlay.classList.add('hidden');
+        }
+    });
+
+    // Handle drop on overlay
+    dropOverlay.addEventListener('drop', function(e) {
+        dragCounter = 0;
+        dropOverlay.classList.add('hidden');
+        
+        var files = e.dataTransfer.files;
+        if (files.length > 0) {
+            uploadFilesDirectly(files);
+        }
+    });
+
+    // Upload files directly via drag & drop
+    function uploadFilesDirectly(files) {
+        var totalFiles = files.length;
+        var uploadedCount = 0;
+        var failedCount = 0;
+
+        showToast('Uploading ' + totalFiles + ' file(s)...', 'info');
+
+        for (var i = 0; i < files.length; i++) {
+            (function(file) {
+                var formData = new FormData();
+                formData.append('file', file);
+                formData.append('path', currentPath);
+
+                fetch('/server/<%= s.id %>/file/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        uploadedCount++;
+                    } else {
+                        failedCount++;
+                    }
+                    checkComplete();
+                })
+                .catch(function() {
+                    failedCount++;
+                    checkComplete();
+                });
+            })(files[i]);
+        }
+
+        function checkComplete() {
+            if (uploadedCount + failedCount === totalFiles) {
+                if (failedCount === 0) {
+                    showToast('Successfully uploaded ' + uploadedCount + ' file(s)', 'success');
+                } else {
+                    showToast('Uploaded ' + uploadedCount + ', failed ' + failedCount, 'warning');
+                }
+                loadFiles(currentPath);
+            }
+        }
+    }
+
+    // ========== MODAL DROP ZONE & FILE PREVIEW ==========
+    var modalDropZone = document.getElementById('modalDropZone');
+    var fileInput = document.getElementById('fileInput');
+    var selectedFilesDiv = document.getElementById('selectedFiles');
+
+    if (modalDropZone) {
+        ['dragenter', 'dragover'].forEach(function(eventName) {
+            modalDropZone.addEventListener(eventName, function() {
+                modalDropZone.classList.add('border-blue-500', 'bg-blue-500/10');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function(eventName) {
+            modalDropZone.addEventListener(eventName, function() {
+                modalDropZone.classList.remove('border-blue-500', 'bg-blue-500/10');
+            });
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            updateFilePreview(this.files);
+        });
+    }
+
+    function updateFilePreview(files) {
+        if (!selectedFilesDiv) return;
+        
+        if (files.length === 0) {
+            selectedFilesDiv.classList.add('hidden');
+            selectedFilesDiv.innerHTML = '';
+            return;
+        }
+
+        selectedFilesDiv.classList.remove('hidden');
+        var html = '';
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var size = (file.size / 1024).toFixed(1);
+            var icon = getFileIconSimple(file.name);
+            html += '<div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-lg">';
+            html += '<i class="' + icon + ' text-sm"></i>';
+            html += '<span class="text-sm text-gray-300 flex-1 truncate">' + escapeHtml(file.name) + '</span>';
+            html += '<span class="text-xs text-gray-500">' + size + ' KB</span>';
+            html += '</div>';
+        }
+        selectedFilesDiv.innerHTML = html;
+    }
+
+    function getFileIconSimple(name) {
+        var ext = name.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'fa-solid fa-image text-green-400';
+        if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) return 'fa-solid fa-video text-purple-400';
+        if (['mp3', 'wav', 'ogg', 'flac'].includes(ext)) return 'fa-solid fa-music text-pink-400';
+        if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'fa-solid fa-file-zipper text-yellow-400';
+        if (['pdf'].includes(ext)) return 'fa-solid fa-file-pdf text-red-400';
+        if (['doc', 'docx'].includes(ext)) return 'fa-solid fa-file-word text-blue-400';
+        if (['js', 'ts', 'jsx', 'tsx'].includes(ext)) return 'fa-brands fa-js text-yellow-400';
+        if (['py'].includes(ext)) return 'fa-brands fa-python text-blue-300';
+        if (['html', 'htm'].includes(ext)) return 'fa-brands fa-html5 text-orange-400';
+        if (['css', 'scss', 'sass'].includes(ext)) return 'fa-brands fa-css3-alt text-blue-400';
+        if (['json', 'xml', 'yaml', 'yml'].includes(ext)) return 'fa-solid fa-file-code text-gray-400';
+        return 'fa-solid fa-file text-gray-400';
+    }
+})();
+</script>
+
+<style>
+.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(8px); }
+#editorContainer { height: 100%; }
+</style>
+
+<%- include('../partials/footer') %>

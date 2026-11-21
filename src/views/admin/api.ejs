@@ -1,0 +1,342 @@
+<%- include('./partials/header') %>
+
+<div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h2 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
+                <i class="fa-solid fa-key mr-3"></i>API Management
+            </h2>
+            <p class="text-gray-400 mt-2">Create and manage API keys for external integrations</p>
+        </div>
+        <button onclick="document.getElementById('createModal').classList.remove('hidden')" 
+            class="mt-4 md:mt-0 bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-3 rounded-xl font-bold hover:opacity-90 transition flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Create API Key
+        </button>
+    </div>
+
+    <% if (message) { %>
+    <div class="mb-6 p-4 rounded-xl <%= message.type === 'success' ? 'bg-green-500/20 border border-green-500/30 text-green-400' : 'bg-red-500/20 border border-red-500/30 text-red-400' %>">
+        <i class="fa-solid <%= message.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle' %> mr-2"></i>
+        <%= message.text %>
+    </div>
+    <% } %>
+
+    <!-- API Keys List -->
+    <div class="glass rounded-3xl border border-white/5 overflow-hidden">
+        <div class="p-6 border-b border-white/5">
+            <h3 class="text-xl font-bold text-white">Your API Keys</h3>
+        </div>
+        
+        <% if (apiKeys.length === 0) { %>
+        <div class="p-12 text-center">
+            <i class="fa-solid fa-key text-6xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400 text-lg">No API keys yet</p>
+            <p class="text-gray-500 text-sm mt-2">Create your first API key to get started</p>
+        </div>
+        <% } else { %>
+        <div class="divide-y divide-white/5">
+            <% apiKeys.forEach(key => { %>
+            <div class="p-6 hover:bg-white/5 transition">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="font-bold text-white text-lg"><%= key.name %></span>
+                            <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded-full">Active</span>
+                        </div>
+                        <div class="flex items-center gap-2 mb-3">
+                            <code id="key-<%= key.id %>" class="bg-black/40 px-4 py-2 rounded-lg text-sm text-gray-400 font-mono">
+                                <%= key.api_key.substring(0, 20) %>...
+                            </code>
+                            <button onclick="copyKey('<%= key.api_key %>')" class="text-gray-400 hover:text-white transition p-2">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                            <button onclick="toggleKeyVisibility('<%= key.id %>', '<%= key.api_key %>')" class="text-gray-400 hover:text-white transition p-2">
+                                <i id="eye-<%= key.id %>" class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <% const perms = key.permissions ? key.permissions.split(',') : []; %>
+                            <% perms.forEach(perm => { %>
+                            <span class="text-xs bg-white/10 text-gray-300 px-2 py-1 rounded-full"><%= perm %></span>
+                            <% }); %>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-2">
+                            <i class="fa-solid fa-clock mr-1"></i>
+                            Created: <%= new Date(key.created_at).toLocaleDateString() %>
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        <form action="/admin/api/regenerate" method="POST" class="inline" onsubmit="return confirm('Are you sure? This will invalidate the current key.')">
+                            <input type="hidden" name="keyId" value="<%= key.id %>">
+                            <button type="submit" class="bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 px-4 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </form>
+                        <form action="/admin/api/delete" method="POST" class="inline" onsubmit="return confirm('Delete this API key? This action cannot be undone.')">
+                            <input type="hidden" name="keyId" value="<%= key.id %>">
+                            <button type="submit" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="mt-8 glass rounded-3xl border border-white/5 overflow-hidden">
+        <div class="p-6 border-b border-white/5">
+            <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-book mr-2"></i>API Documentation</h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Authentication -->
+            <div>
+                <h4 class="text-lg font-bold text-cyan-400 mb-3">Authentication</h4>
+                <p class="text-gray-400 mb-3">Include your API key in the request header:</p>
+                <code class="block bg-black/40 p-4 rounded-xl text-sm text-gray-300 font-mono">
+                    X-API-Key: xeo_your_api_key_here
+                </code>
+            </div>
+
+            <!-- Endpoints -->
+            <div>
+                <h4 class="text-lg font-bold text-cyan-400 mb-3">Available Endpoints</h4>
+                <div class="space-y-4">
+                    <!-- Stats -->
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/stats</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get general statistics (requires: stats:read)</p>
+                    </div>
+
+                    <!-- Users -->
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/users</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get all users (requires: users:read)</p>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/users/:id</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get specific user (requires: users:read)</p>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/users</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Create new user (requires: users:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "id": "discord_id", "username": "name", "avatar": "url", "coins": 0 }
+                        </code>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/users/:id/coins</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Modify user coins (requires: users:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "amount": 100, "action": "add|subtract|set" }
+                        </code>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/users/:id/ban</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Ban/Unban user (requires: users:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "banned": true, "reason": "optional reason" }
+                        </code>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/users/:id/admin</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Set/Remove admin (requires: users:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "isAdmin": true }
+                        </code>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/users/:id/servers</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get user's servers (requires: servers:read)</p>
+                    </div>
+
+                    <!-- Servers -->
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/servers</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get all servers (requires: servers:read)</p>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/servers/:id</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get specific server (requires: servers:read)</p>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/servers</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Create new server (requires: servers:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "ownerId": "user_id", "name": "server_name" }
+                        </code>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded font-bold">DELETE</span>
+                            <code class="text-white font-mono">/admin/api/v1/servers/:id</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Delete server (requires: servers:write)</p>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/servers/:id/suspend</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Suspend/Unsuspend server (requires: servers:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "suspended": true }
+                        </code>
+                    </div>
+
+                    <!-- Config -->
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">GET</span>
+                            <code class="text-white font-mono">/admin/api/v1/config</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Get site configuration (requires: config:read)</p>
+                    </div>
+
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded font-bold">POST</span>
+                            <code class="text-white font-mono">/admin/api/v1/config</code>
+                        </div>
+                        <p class="text-gray-400 text-sm">Update site configuration (requires: config:write)</p>
+                        <code class="block bg-black/40 p-2 rounded mt-2 text-xs text-gray-400">
+                            Body: { "sitename": "New Name", "price": "10", "maintenance": "false" }
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0a0a1a] rounded-3xl border border-white/10 w-full max-w-lg">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white">Create API Key</h3>
+            <button onclick="document.getElementById('createModal').classList.add('hidden')" class="text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        <form action="/admin/api/create" method="POST" class="p-6 space-y-6">
+            <div>
+                <label class="block text-gray-400 text-sm mb-2">Key Name</label>
+                <input type="text" name="name" required placeholder="e.g., Discord Bot, Website Integration" 
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+            </div>
+            
+            <div>
+                <label class="block text-gray-400 text-sm mb-3">Permissions</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="all" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">All Permissions</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="stats:read" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Stats Read</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="users:read" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Users Read</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="users:write" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Users Write</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="servers:read" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Servers Read</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="servers:write" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Servers Write</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="config:read" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Config Read</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-white/5 p-3 rounded-xl cursor-pointer hover:bg-white/10 transition">
+                        <input type="checkbox" name="permissions" value="config:write" class="rounded bg-white/10 border-white/20 text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-white text-sm">Config Write</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 py-3 rounded-xl font-bold hover:opacity-90 transition">
+                <i class="fa-solid fa-key mr-2"></i>Generate API Key
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function copyKey(key) {
+    navigator.clipboard.writeText(key).then(() => {
+        alert('API Key copied to clipboard!');
+    });
+}
+
+function toggleKeyVisibility(id, fullKey) {
+    const codeEl = document.getElementById('key-' + id);
+    const eyeEl = document.getElementById('eye-' + id);
+    
+    if (eyeEl.classList.contains('fa-eye')) {
+        codeEl.textContent = fullKey;
+        eyeEl.classList.remove('fa-eye');
+        eyeEl.classList.add('fa-eye-slash');
+    } else {
+        codeEl.textContent = fullKey.substring(0, 20) + '...';
+        eyeEl.classList.remove('fa-eye-slash');
+        eyeEl.classList.add('fa-eye');
+    }
+}
+</script>
+
+<%- include('./partials/footer') %>

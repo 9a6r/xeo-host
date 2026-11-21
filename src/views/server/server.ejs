@@ -1,0 +1,228 @@
+<%- include('../partials/header') %>
+
+<!-- Top Bar -->
+<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+    <div class="flex items-center gap-4 w-full">
+        <a href="/dashboard" class="glass w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition"><i class="fa-solid fa-arrow-left"></i></a>
+        <div>
+            <h1 class="text-2xl font-bold"><%= s.name %></h1>
+            <div class="text-xs text-gray-400 font-mono"><%= s.startup_file %></div>
+        </div>
+    </div>
+    
+    <div class="flex gap-2 w-full md:w-auto">
+        <button onclick="p('start')" class="flex-1 md:flex-none bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white px-5 py-2 rounded-xl font-bold transition flex items-center justify-center gap-2"><i class="fa-solid fa-play"></i> Start</button>
+        <button onclick="p('restart')" class="flex-1 md:flex-none bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-5 py-2 rounded-xl font-bold transition flex items-center justify-center gap-2"><i class="fa-solid fa-rotate"></i> Restart</button>
+        <button onclick="p('stop')" class="flex-1 md:flex-none bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-5 py-2 rounded-xl font-bold transition flex items-center justify-center gap-2"><i class="fa-solid fa-stop"></i> Stop</button>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="flex gap-1 mb-6 border-b border-white/10 overflow-x-auto">
+    <button onclick="tab('console')" id="btn-console" class="tab-btn active-tab px-6 py-3 text-sm font-bold border-b-2 border-indigo-500 text-white transition"><i class="fa-solid fa-terminal mr-2"></i> Console</button>
+    <button onclick="tab('files')" id="btn-files" class="tab-btn px-6 py-3 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white transition"><i class="fa-solid fa-folder-open mr-2"></i> Files</button>
+    <button onclick="tab('startup')" id="btn-startup" class="tab-btn px-6 py-3 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white transition"><i class="fa-solid fa-rocket mr-2"></i> Startup</button>
+    <a href="/server/<%= s.id %>/resources" class="tab-btn px-6 py-3 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white transition"><i class="fa-solid fa-sliders mr-2"></i> Resources</a>
+    <button onclick="tab('settings')" id="btn-settings" class="tab-btn px-6 py-3 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white transition"><i class="fa-solid fa-gear mr-2"></i> Settings</button>
+</div>
+
+<!-- CONSOLE -->
+<div id="tab-console" class="tab-content h-[600px] flex flex-col">
+    <div class="glass p-4 mb-4 rounded-xl flex justify-between items-center">
+        <div class="flex gap-6">
+            <div><span class="text-xs text-gray-400 uppercase font-bold">Status</span> <div id="status" class="font-bold text-gray-500 text-sm">WAITING...</div></div>
+            <div><span class="text-xs text-gray-400 uppercase font-bold">CPU</span> <div id="cpu" class="font-bold font-mono text-indigo-400 text-sm">0%</div></div>
+            <div><span class="text-xs text-gray-400 uppercase font-bold">RAM</span> <div id="ram" class="font-bold font-mono text-purple-400 text-sm">0 MB</div></div>
+        </div>
+        <div class="text-xs text-gray-500" id="socket-status">Socket: Disconnected</div>
+    </div>
+    <div class="flex-1 bg-[#0a0a0c] rounded-xl border border-white/10 p-4 font-mono text-xs md:text-sm overflow-hidden flex flex-col shadow-inner relative">
+        <div id="term" class="flex-1 overflow-y-auto whitespace-pre-wrap leading-relaxed pb-2 font-mono text-gray-300"></div>
+    </div>
+</div>
+
+<!-- FILES -->
+<div id="tab-files" class="tab-content hidden">
+    <div class="flex justify-between mb-4">
+        <div class="text-gray-400 text-sm py-2 font-mono">/home/container</div>
+        <div class="flex gap-2">
+            <button onclick="document.getElementById('upModal').classList.remove('hidden')" class="bg-blue-600 px-4 py-1.5 rounded-lg text-xs font-bold transition">Upload</button>
+            <button onclick="edit('index.js', '')" class="bg-green-600 px-4 py-1.5 rounded-lg text-xs font-bold transition">New File</button>
+        </div>
+    </div>
+    <div class="glass rounded-xl overflow-hidden">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-white/5 text-gray-400 text-xs uppercase"><tr><th class="p-3">Name</th><th class="p-3">Size</th><th class="p-3 text-right">Actions</th></tr></thead>
+            <tbody>
+                <% files.forEach(f => { %>
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="p-3 font-mono"><i class="fa-solid <%= f.isDir?'fa-folder text-yellow-500':'fa-file-code text-blue-400' %> mr-2"></i> <%= f.name %></td>
+                    <td class="p-3 text-gray-500"><%= (f.size/1024).toFixed(1) %> KB</td>
+                    <td class="p-3 text-right flex justify-end gap-2">
+                        <% if(!f.isDir) { %> <button onclick="fetchContent('<%= f.name %>')" class="bg-white/10 hover:bg-indigo-600 p-1.5 rounded text-xs transition"><i class="fa-solid fa-pen"></i></button> <% } %>
+                        <button onclick="rename('<%= f.name %>')" class="bg-white/10 hover:bg-orange-600 p-1.5 rounded text-xs transition"><i class="fa-solid fa-i-cursor"></i></button>
+                        <form action="/server/<%= s.id %>/file/delete" method="POST" class="inline" onsubmit="return confirm('Delete <%= f.name %>?')"><input type="hidden" name="file" value="<%= f.name %>"><button class="bg-white/10 hover:bg-red-600 p-1.5 rounded text-xs transition"><i class="fa-solid fa-trash"></i></button></form>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- STARTUP -->
+<div id="tab-startup" class="tab-content hidden">
+    <div class="glass p-6 rounded-2xl">
+        <h3 class="font-bold mb-4 text-gray-300">Boot Configuration</h3>
+        <div class="space-y-4">
+            <div><label class="text-xs text-gray-500 uppercase font-bold">Startup File</label><input id="startFile" value="<%= s.startup_file %>" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white mt-1"></div>
+            <button onclick="saveStartup()" class="bg-indigo-600 w-full py-2 rounded-xl font-bold hover:bg-indigo-500 transition">Save Configuration</button>
+        </div>
+        <div class="mt-6 border-t border-white/10 pt-6">
+            <h3 class="font-bold mb-4 text-gray-300">NPM Manager</h3>
+            <div class="flex gap-2">
+                <input id="pkgName" placeholder="Package name (e.g. axios)" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white">
+                <button onclick="installPkg()" class="bg-green-600 px-4 rounded-xl font-bold hover:bg-green-500 transition">Install</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="tab-content hidden">
+    <% if(isOwner || user.isAdmin) { %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass p-6 rounded-2xl border border-white/5">
+            <h3 class="font-bold mb-4 text-white">General</h3>
+            <form action="/server/<%= s.id %>/settings/rename" method="POST">
+                <label class="text-xs text-gray-500 uppercase font-bold">Server Name</label>
+                <input name="newName" value="<%= s.name %>" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-white mt-1 mb-4">
+                <button class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white w-full py-2 rounded-xl font-bold transition">Rename Server</button>
+            </form>
+        </div>
+        <div class="glass p-6 rounded-2xl border border-red-500/20 bg-red-500/5">
+            <h3 class="font-bold mb-4 text-red-400">Danger Zone</h3>
+            <div class="space-y-3">
+                <form action="/server/<%= s.id %>/settings/reinstall" method="POST" onsubmit="return confirm('This will delete all files. Continue?')"><button class="w-full bg-orange-600/20 text-orange-400 hover:bg-orange-600 hover:text-white py-2 rounded-xl font-bold transition">Reinstall Server</button></form>
+                <form action="/server/<%= s.id %>/settings/delete" method="POST" onsubmit="return confirm('DELETE SERVER PERMANENTLY?')"><button class="w-full bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white py-2 rounded-xl font-bold transition">Delete Server</button></form>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<!-- MODALS -->
+<div id="edModal" class="hidden fixed inset-0 bg-black/95 z-50 p-4 flex items-center justify-center"><div class="w-full max-w-4xl h-[80vh] flex flex-col glass rounded-2xl border border-white/10 overflow-hidden"><div class="flex justify-between items-center p-4 border-b border-white/10 bg-[#111]"><h3 id="edTitle" class="font-bold text-white font-mono">Editor</h3><div class="flex gap-2"><button onclick="saveFile()" class="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition">Save</button><button onclick="document.getElementById('edModal').classList.add('hidden')" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition">Close</button></div></div><textarea id="edContent" class="hidden"></textarea></div></div>
+<div id="upModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"><form action="/server/<%= s.id %>/file/upload" method="POST" enctype="multipart/form-data" class="glass bg-[#1a1a1a] p-6 rounded-2xl w-full max-w-sm border border-white/10"><h3 class="font-bold text-xl mb-4">Upload</h3><input type="file" name="file" class="w-full mb-4 text-gray-400 text-sm"><label class="flex gap-2 text-sm text-gray-400 mb-6"><input type="checkbox" name="unzip" value="true"> Unzip</label><div class="flex gap-2"><button class="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded-xl font-bold transition">Upload</button><button type="button" onclick="document.getElementById('upModal').classList.add('hidden')" class="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-xl font-bold transition text-gray-300">Cancel</button></div></form></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+
+<script>
+    // --- SOCKET LOGIC (FIXED) ---
+    // We use 'socket' variable, NOT 'io' to avoid function shadowing
+    const socket = io();
+    const term = document.getElementById('term');
+    const sockStatus = document.getElementById('socket-status');
+    
+    // 1. Connection Event
+    socket.on('connect', () => {
+        sockStatus.innerText = "Socket: Connected";
+        sockStatus.className = "text-xs text-green-500 font-bold";
+        socket.emit('join', '<%= s.id %>');
+        addLog("System", "Connected to live console stream.");
+    });
+
+    // 2. Disconnect Event
+    socket.on('disconnect', () => {
+        sockStatus.innerText = "Socket: Disconnected";
+        sockStatus.className = "text-xs text-red-500 font-bold";
+        addLog("System", "Connection lost. Reconnecting...");
+    });
+
+    // 3. Error Event
+    socket.on('connect_error', (err) => {
+        sockStatus.innerText = "Socket Error";
+        addLog("Error", "Socket connection failed: " + err);
+    });
+
+    // 4. Receive Logs
+    socket.on('log', msg => {
+        // Strip ANSI codes for cleaner display in browser
+        const clean = msg.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+        addLog(null, clean);
+    });
+
+    socket.on('status', s => {
+        const el = document.getElementById('status');
+        el.innerText = s.toUpperCase();
+        if(s==='online') el.className = 'font-bold text-green-400 text-sm';
+        else el.className = 'font-bold text-gray-500 text-sm';
+    });
+
+    socket.on('stats', d => {
+        document.getElementById('cpu').innerText = d.cpu+'%';
+        document.getElementById('ram').innerText = d.ram+' MB';
+    });
+
+    function addLog(source, msg) {
+        const div = document.createElement('div');
+        if(source) div.innerHTML = `<span class="text-blue-400">[${source}]</span> ${msg}`;
+        else div.innerText = msg;
+        term.appendChild(div);
+        term.scrollTop = term.scrollHeight;
+    }
+
+    // --- ACTIONS ---
+    function p(a) { 
+        addLog("User", "Sending signal: " + a);
+        fetch('/server/<%= s.id %>/power', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a})}); 
+    }
+    
+    // --- TABS ---
+    function tab(n){document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));document.querySelectorAll('.tab-btn').forEach(e=>{e.classList.remove('border-indigo-500','text-white');e.classList.add('border-transparent','text-gray-400')});document.getElementById('tab-'+n).classList.remove('hidden');document.getElementById('btn-'+n).classList.remove('border-transparent','text-gray-400');document.getElementById('btn-'+n).classList.add('border-indigo-500','text-white');}
+
+    // --- EDITOR ---
+    let cm, curFile='';
+    setTimeout(() => {
+        cm = CodeMirror.fromTextArea(document.getElementById('edContent'), {
+            mode: 'javascript', theme: 'dracula', lineNumbers: true, lineWrapping: true
+        });
+    }, 500);
+
+    function fetchContent(f) {
+        curFile=f; document.getElementById('edTitle').innerText=f;
+        fetch('/server/<%= s.id %>/file/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file:f})})
+        .then(r=>r.text()).then(t => {
+            cm.setValue(t);
+            document.getElementById('edModal').classList.remove('hidden');
+            setTimeout(()=>cm.refresh(), 200);
+        });
+    }
+
+    function edit(f,c) {
+        curFile=f; document.getElementById('edTitle').innerText='New: '+f;
+        cm.setValue(c);
+        document.getElementById('edModal').classList.remove('hidden');
+        setTimeout(()=>cm.refresh(), 200);
+    }
+
+    function saveFile() {
+        fetch('/server/<%= s.id %>/file/save',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({file:curFile, content:cm.getValue()})
+        }).then(()=>alert('Saved!'));
+    }
+
+    function rename(old){const n=prompt('New Name:',old);if(n&&n!==old){const f=document.createElement('form');f.method='POST';f.action='/server/<%= s.id %>/file/rename';f.innerHTML=`<input type="hidden" name="oldName" value="${old}"><input type="hidden" name="newName" value="${n}">`;document.body.appendChild(f);f.submit();}}
+    function saveStartup(){fetch('/server/<%= s.id %>/startup/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({startup_file:document.getElementById('startFile').value})}).then(()=>alert('Saved!'));}
+    function installPkg(){const pkg=document.getElementById('pkgName').value;tab('console');fetch('/server/<%= s.id %>/startup/install',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pkg})});}
+</script>
+<style>
+    .custom-scroll::-webkit-scrollbar{width:6px;background:#111}
+    .custom-scroll::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+    .CodeMirror{height:100% !important;border-radius:0.5rem;}
+</style>
+<%- include('../partials/footer') %>

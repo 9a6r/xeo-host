@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+    <title>Admin | <%= sitename %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <% if (typeof siteLogo !== 'undefined' && siteLogo) { %>
+    <link rel="icon" type="image/png" href="<%= siteLogo %>">
+    <link rel="apple-touch-icon" href="<%= siteLogo %>">
+    <% } %>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #050508; color: white; font-family: 'Segoe UI', sans-serif; }
+        .glass { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .admin-main {
+                margin-left: 0 !important;
+                padding-top: 70px !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#050508] min-h-screen">
+    <%- include('./sidebar') %>
+    <main class="admin-main p-4 md:p-8 transition-all duration-300" style="margin-left: 260px;">
